@@ -48,10 +48,17 @@ They get it automatically next time they open the app. This does **not** work fo
 
 ## Crash reporting (Sentry)
 
+The `@sentry/react-native/expo` **config plugin is currently NOT in `app.json`**, on purpose — that plugin adds a Gradle step that uploads source maps to Sentry during every build, and it hard-fails the whole build if it runs against a placeholder/nonexistent org+project (this actually happened once — see git history). The JS SDK (`lib/sentry.ts`) is still wired up and safe to build with as-is; it just no-ops without a DSN.
+
+To actually turn crash reporting on:
+
 1. Create a free account at [sentry.io](https://sentry.io), then a project (platform: React Native).
 2. Copy the **DSN** it gives you into `mobile/.env` as `EXPO_PUBLIC_SENTRY_DSN`. This value is meant to be public (it's embedded in the client app), unlike the other keys in this project.
-3. In `app.json`, replace `YOUR_SENTRY_ORG_SLUG` / `YOUR_SENTRY_PROJECT_SLUG` in the `@sentry/react-native/expo` plugin config with your org/project slugs (visible in the Sentry project URL).
-4. Optional but recommended — for readable stack traces instead of minified JS: create a Sentry auth token (Settings → Auth Tokens) and set it as an EAS secret so it's available during cloud builds, without ever living in this repo:
+3. **Add the plugin back** to `app.json`'s `plugins` array, with your real org/project slugs (visible in the Sentry project URL) — don't skip this step or reintroduce it with placeholders, or the build will fail the same way again:
+   ```json
+   ["@sentry/react-native/expo", { "organization": "your-org-slug", "project": "your-project-slug" }]
+   ```
+4. Also create a Sentry auth token (Settings → Auth Tokens) and set it as an EAS secret — required once the plugin is back, not optional, since the upload step runs unconditionally once the plugin is present:
    ```bash
    eas secret:create --scope project --name SENTRY_AUTH_TOKEN --value <your-token>
    ```
