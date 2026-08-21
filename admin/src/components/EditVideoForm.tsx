@@ -82,7 +82,7 @@ export function EditVideoForm({ sectionId, video }: { sectionId: string; video: 
               defaultValue={video.price_cents ?? ""}
               required
               className={inputClass}
-              placeholder="Price in cents"
+              placeholder="Price in paise (100 = ₹1)"
             />
           )}
 

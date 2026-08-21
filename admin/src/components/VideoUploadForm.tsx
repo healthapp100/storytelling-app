@@ -99,7 +99,7 @@ export function VideoUploadForm({ sectionId }: { sectionId: string }) {
         </label>
       </div>
       {accessTier === "one_time" && (
-        <input name="price_cents" type="number" placeholder="Price in cents" required className={inputClass} />
+        <input name="price_cents" type="number" placeholder="Price in paise (100 = ₹1)" required className={inputClass} />
       )}
 
       <label className="block text-sm text-ink-muted">

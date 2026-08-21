@@ -40,7 +40,7 @@ export default async function PricingPage() {
           >
             <h2 className="font-display text-lg text-ink">{PLAN_LABELS[plan.code]}</h2>
             <label className="block text-sm text-ink-muted">
-              Price (in cents)
+              Price (in paise — 100 paise = ₹1)
               <input
                 name="price_cents"
                 type="number"

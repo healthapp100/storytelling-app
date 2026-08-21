@@ -89,7 +89,7 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
       </View>
       <Text style={styles.meta}>
         Posted {formatDate(video.posted_at)} · Expires {formatDate(video.expires_at)}
-        {video.access_tier === "one_time" && ` · $${((video.price_cents ?? 0) / 100).toFixed(2)}`}
+        {video.access_tier === "one_time" && ` · ₹${((video.price_cents ?? 0) / 100).toFixed(2)}`}
       </Text>
 
       {editing ? (

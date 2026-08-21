@@ -22,7 +22,7 @@ const PLAN_HINTS: Record<SubscriptionPlan["code"], string> = {
 };
 
 function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `₹${(cents / 100).toFixed(2)}`;
 }
 
 export default function Subscribe() {

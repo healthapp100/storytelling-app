@@ -103,7 +103,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       {accessTier === "one_time" && (
         <TextInput
           style={styles.input}
-          placeholder="Price in cents"
+          placeholder="Price in paise (100 = ₹1)"
           value={priceCents}
           onChangeText={setPriceCents}
           keyboardType="number-pad"
