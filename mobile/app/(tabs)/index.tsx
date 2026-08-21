@@ -1,16 +1,18 @@
 import { useVideoPlayer, VideoView } from "expo-video";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { getAppContent, getTodaysVideo, videoPlaybackUrl } from "../../lib/queries";
+import { Pressy } from "../../components/Pressy";
+import { getAppContent, getTodaysVideo } from "../../lib/queries";
+import { useRealtimeTable } from "../../lib/realtime";
+import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
 
 export default function Home() {
@@ -19,22 +21,27 @@ export default function Home() {
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
   const [todaysVideo, setTodaysVideo] = useState<Video | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const [about, introKey, today] = await Promise.all([
-        getAppContent("home_intro_text"),
-        getAppContent("home_intro_video_key"),
-        getTodaysVideo(),
-      ]);
-      setIntroText((about?.value as string) ?? "");
-      const publicBase = process.env.EXPO_PUBLIC_R2_PUBLIC_BASE_URL;
-      if (introKey?.value && publicBase) {
-        setIntroVideoUrl(`${publicBase}/${introKey.value as string}`);
-      }
-      setTodaysVideo(today);
-      setLoading(false);
-    })();
+  const load = useCallback(async () => {
+    const [about, introKey, today] = await Promise.all([
+      getAppContent("home_intro_text"),
+      getAppContent("home_intro_video_key"),
+      getTodaysVideo(),
+    ]);
+    setIntroText((about?.value as string) ?? "");
+    const publicBase = process.env.EXPO_PUBLIC_R2_PUBLIC_BASE_URL;
+    setIntroVideoUrl(introKey?.value && publicBase ? `${publicBase}/${introKey.value as string}` : null);
+    setTodaysVideo(today);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Live refresh: an admin publishing a new "today's video" or editing the
+  // intro copy shows up here without the user needing to reopen the app.
+  useRealtimeTable("videos", load);
+  useRealtimeTable("app_content", load);
 
   const introPlayer = useVideoPlayer(introVideoUrl ?? "", (player) => {
     player.loop = true;
@@ -43,7 +50,7 @@ export default function Home() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.accent} />
       </SafeAreaView>
     );
   }
@@ -51,18 +58,24 @@ export default function Home() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.heading}>Storytelling App</Text>
+        <View>
+          <Text style={styles.eyebrow}>Every day, a new story</Text>
+          <Text style={styles.heading}>Storytelling</Text>
+        </View>
         {introText ? <Text style={styles.intro}>{introText}</Text> : null}
 
         {todaysVideo && (
-          <Pressable
+          <Pressy
             style={styles.todayCard}
             onPress={() => router.push({ pathname: "/video/[id]", params: { id: todaysVideo.id } })}
           >
-            <Text style={styles.todayLabel}>Today&apos;s video</Text>
+            <Text style={styles.todayLabel}>Today&apos;s story</Text>
             <Text style={styles.todayTitle}>{todaysVideo.title}</Text>
-            <Text style={styles.todayCta}>Watch now →</Text>
-          </Pressable>
+            <View style={styles.todayCtaRow}>
+              <Text style={styles.todayCta}>Watch now</Text>
+              <Text style={styles.todayCtaArrow}>→</Text>
+            </View>
+          </Pressy>
         )}
 
         {introVideoUrl && (
@@ -77,21 +90,32 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  container: { padding: 20, gap: 20 },
-  heading: { fontSize: 26, fontWeight: "800" },
-  intro: { fontSize: 15, color: "#444", lineHeight: 21 },
-  todayCard: {
-    backgroundColor: "#111",
-    borderRadius: 16,
-    padding: 20,
-    gap: 4,
+  safeArea: { flex: 1, backgroundColor: colors.paper },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
+  container: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.accent,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    marginBottom: 4,
   },
-  todayLabel: { color: "#AAA", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 },
-  todayTitle: { color: "#fff", fontSize: 20, fontWeight: "700" },
-  todayCta: { color: "#fff", marginTop: 8, fontWeight: "600" },
-  introVideoWrap: { gap: 8 },
-  sectionLabel: { fontSize: 13, color: "#666", fontWeight: "600" },
-  introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: 12, backgroundColor: "#000" },
+  heading: { fontFamily: fonts.display, fontSize: 34, color: colors.ink },
+  intro: { fontSize: 15.5, color: colors.inkMuted, lineHeight: 23 },
+  todayCard: {
+    backgroundColor: colors.ink,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    gap: spacing.xs,
+    ...shadow.card,
+  },
+  todayLabel: { color: "#D8B79A", fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: "700" },
+  todayTitle: { color: "#fff", fontFamily: fonts.display, fontSize: 22, marginTop: 2 },
+  todayCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.md },
+  todayCta: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  todayCtaArrow: { color: colors.accent, fontWeight: "700", fontSize: 16 },
+  introVideoWrap: { gap: spacing.sm },
+  sectionLabel: { fontSize: 13, color: colors.inkMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6 },
+  introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: radii.md, backgroundColor: colors.ink },
 });

@@ -1,8 +1,10 @@
 import { useVideoPlayer, VideoView } from "expo-video";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressy } from "../../components/Pressy";
 import { getVideo, videoPlaybackUrl } from "../../lib/queries";
+import { colors, fonts, radii, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
 
 export default function VideoPlayer() {
@@ -27,7 +29,7 @@ export default function VideoPlayer() {
   if (video === null) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -35,12 +37,13 @@ export default function VideoPlayer() {
   if (video === "denied") {
     return (
       <View style={styles.center}>
+        <Text style={styles.deniedTitle}>Not available right now</Text>
         <Text style={styles.deniedText}>
-          This video isn&apos;t available — it may have expired, or it needs a subscription.
+          This video may have expired, or it needs a subscription to watch.
         </Text>
-        <Pressable style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
+        <Pressy style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
           <Text style={styles.subscribeLabel}>See subscription plans</Text>
-        </Pressable>
+        </Pressy>
       </View>
     );
   }
@@ -57,13 +60,26 @@ export default function VideoPlayer() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 16 },
-  deniedText: { textAlign: "center", color: "#666", fontSize: 15 },
-  subscribeButton: { backgroundColor: "#111", borderRadius: 10, paddingVertical: 12, paddingHorizontal: 20 },
+  container: { flex: 1, backgroundColor: colors.paper },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xl,
+    gap: spacing.sm,
+    backgroundColor: colors.paper,
+  },
+  deniedTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.ink, textAlign: "center" },
+  deniedText: { textAlign: "center", color: colors.inkMuted, fontSize: 15, lineHeight: 21, marginBottom: spacing.sm },
+  subscribeButton: {
+    backgroundColor: colors.ink,
+    borderRadius: radii.md,
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+  },
   subscribeLabel: { color: "#fff", fontWeight: "700" },
   player: { width: "100%", aspectRatio: 16 / 9, backgroundColor: "#000" },
-  details: { padding: 16, gap: 8 },
-  title: { fontSize: 20, fontWeight: "700" },
-  description: { fontSize: 15, color: "#444", lineHeight: 21 },
+  details: { padding: spacing.lg, gap: spacing.sm },
+  title: { fontFamily: fonts.display, fontSize: 22, color: colors.ink },
+  description: { fontSize: 15, color: colors.inkMuted, lineHeight: 22 },
 });

@@ -1,0 +1,17 @@
+# EAS Build uploads a tarball of this folder. Without this file it falls
+# back to .gitignore, which *should* already exclude these — this file
+# makes it explicit rather than relying on that fallback, since an
+# accidentally-included node_modules is the most common cause of a failed
+# or oversized tarball upload.
+node_modules/
+.expo/
+.git/
+dist/
+web-build/
+android/
+ios/
+*.tsbuildinfo
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store

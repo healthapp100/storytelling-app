@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Same warm, editorial palette as the mobile app (see mobile/lib/theme.ts)
+   so the admin panel and the app read as one product, not two. */
+@theme {
+  --color-paper: #fbf7f0;
+  --color-paper-raised: #ffffff;
+  --color-ink: #241f18;
+  --color-ink-muted: #6b6153;
+  --color-ink-faint: #9c9384;
+  --color-border: #e7dfd1;
+  --color-accent: #b5551e;
+  --color-accent-soft: #f3e4d6;
+  --color-accent-ink: #5c2a0e;
+  --color-success: #3f6b4a;
+  --color-success-soft: #e5efe6;
+  --color-danger: #b23a2e;
+  --color-danger-soft: #f8e6e1;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-fraunces);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

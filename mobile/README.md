@@ -28,6 +28,24 @@ eas submit --platform all
 
 Fill in `eas.json`'s `submit.production` block (Apple ID, App Store Connect app ID, Play service account) before submitting.
 
+## Pushing quick updates without a new build (EAS Update)
+
+Once `eas init` has run, also run:
+
+```bash
+eas update:configure
+```
+
+This replaces the placeholder in `app.json`'s `updates.url` with your real project's URL (it's currently set to `https://u.expo.dev/YOUR_EAS_PROJECT_ID` — a placeholder, not a real value yet).
+
+After that, whenever you make a **JS/asset-only** change (no new native dependency), you can push it straight to everyone who already has the app installed, without a new build, QR code, or store review:
+
+```bash
+eas update --branch production --message "describe the change"
+```
+
+They get it automatically next time they open the app. This does **not** work for native changes (e.g. adding a new package like the ones already in this app) — those still need a full `eas build` and a fresh install. `development`/`preview`/`production` builds each check their matching channel (already set in `eas.json`), so an update pushed to `production` only reaches production builds.
+
 ## What's here
 
 - `app/(auth)` — sign-in/sign-up, email or phone, one Supabase identity underneath (see `lib/auth.ts`).

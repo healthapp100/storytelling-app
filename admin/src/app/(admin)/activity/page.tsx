@@ -23,36 +23,37 @@ export default async function ActivityPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900">Activity log</h1>
-        <p className="mt-1 text-sm text-stone-500">Last 200 admin actions, most recent first.</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Audit trail</p>
+        <h1 className="mt-1 font-display text-3xl text-ink">Activity log</h1>
+        <p className="mt-2 text-sm text-ink-muted">Last 200 admin actions, most recent first.</p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-border bg-paper-raised">
         <table className="w-full text-sm">
-          <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+          <thead className="bg-paper text-left text-xs uppercase tracking-wide text-ink-muted">
             <tr>
-              <th className="px-4 py-2">When</th>
-              <th className="px-4 py-2">Admin</th>
-              <th className="px-4 py-2">Action</th>
-              <th className="px-4 py-2">Table</th>
+              <th className="px-4 py-3">When</th>
+              <th className="px-4 py-3">Admin</th>
+              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Table</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-100">
+          <tbody className="divide-y divide-border">
             {(log ?? []).map((row) => (
-              <tr key={row.id}>
-                <td className="px-4 py-2 text-stone-500">{formatDate(row.created_at)}</td>
-                <td className="px-4 py-2">
+              <tr key={row.id} className="transition-colors hover:bg-paper">
+                <td className="px-4 py-3 text-ink-muted">{formatDate(row.created_at)}</td>
+                <td className="px-4 py-3 text-ink">
                   {adminById.get(row.admin_id)?.display_name ??
                     adminById.get(row.admin_id)?.email ??
                     row.admin_id}
                 </td>
-                <td className="px-4 py-2">{row.action}</td>
-                <td className="px-4 py-2 text-stone-500">{row.target_table}</td>
+                <td className="px-4 py-3 text-ink">{row.action}</td>
+                <td className="px-4 py-3 text-ink-muted">{row.target_table}</td>
               </tr>
             ))}
             {(log ?? []).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-stone-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-ink-faint">
                   No activity yet.
                 </td>
               </tr>

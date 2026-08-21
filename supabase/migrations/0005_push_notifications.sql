@@ -17,10 +17,10 @@ as $$
 begin
   if new.is_daily_featured and (tg_op = 'INSERT' or old.is_daily_featured is distinct from new.is_daily_featured) then
     perform net.http_post(
-      url := 'https://<project-ref>.supabase.co/functions/v1/send-daily-notification',
+      url := 'https://hqkuhapqbttphfidtsky.supabase.co/functions/v1/send-daily-notification',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer <service-role-key>'
+        'Authorization', 'Bearer <secret-key>'
       ),
       body := jsonb_build_object('videoId', new.id, 'title', new.title)
     );

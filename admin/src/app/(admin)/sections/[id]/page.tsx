@@ -9,11 +9,13 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
+// Status colors are semantic (state at a glance), kept separate from the
+// brand accent so they don't compete with it.
 const STATUS_STYLES: Record<Video["status"], string> = {
   scheduled: "bg-amber-100 text-amber-800",
-  live: "bg-emerald-100 text-emerald-800",
-  expired: "bg-stone-200 text-stone-600",
-  deleted: "bg-stone-200 text-stone-500",
+  live: "bg-success-soft text-success",
+  expired: "bg-ink-faint/15 text-ink-muted",
+  deleted: "bg-ink-faint/15 text-ink-faint",
 };
 
 export default async function SectionDetailPage({
@@ -35,37 +37,40 @@ export default async function SectionDetailPage({
   ]);
 
   if (!section) {
-    return <p className="text-sm text-stone-500">Section not found.</p>;
+    return <p className="text-sm text-ink-muted">Section not found.</p>;
   }
 
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <Link href="/sections" className="text-sm text-stone-500 hover:underline">
+        <Link href="/sections" className="text-sm text-ink-muted transition-colors hover:text-accent">
           ← All sections
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold text-stone-900">{section.title}</h1>
-        {section.description && <p className="text-sm text-stone-500">{section.description}</p>}
+        <h1 className="mt-1 font-display text-3xl text-ink">{section.title}</h1>
+        {section.description && <p className="text-sm text-ink-muted">{section.description}</p>}
       </div>
 
-      <ul className="divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-paper-raised">
         {(videos ?? []).map((video) => (
-          <li key={video.id} className="flex items-start justify-between gap-4 p-4">
+          <li
+            key={video.id}
+            className="flex items-start justify-between gap-4 p-4 transition-colors hover:bg-paper"
+          >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium text-stone-900">{video.title}</p>
+                <p className="font-medium text-ink">{video.title}</p>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[video.status]}`}
                 >
                   {video.status}
                 </span>
                 {video.is_daily_featured && (
-                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent-ink">
                     Today&apos;s video
                   </span>
                 )}
               </div>
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-ink-muted">
                 Posted {formatDate(video.posted_at)} · Expires {formatDate(video.expires_at)}
                 {video.access_tier === "one_time" &&
                   ` · $${((video.price_cents ?? 0) / 100).toFixed(2)}`}
@@ -76,7 +81,10 @@ export default async function SectionDetailPage({
               <div className="flex shrink-0 gap-3">
                 {!video.is_daily_featured && (
                   <form action={setDailyFeatured.bind(null, id, video.id)}>
-                    <button type="submit" className="text-sm text-indigo-600 hover:underline">
+                    <button
+                      type="submit"
+                      className="text-sm font-medium text-accent transition-colors hover:text-accent-ink hover:underline"
+                    >
                       Feature
                     </button>
                   </form>
@@ -84,7 +92,7 @@ export default async function SectionDetailPage({
                 <form action={expireVideoNow.bind(null, id, video.id)}>
                   <ConfirmSubmitButton
                     confirmMessage={`Remove "${video.title}" now? It will be purged on the next expiry sweep.`}
-                    className="text-sm text-red-600 hover:underline"
+                    className="text-sm font-medium text-danger transition-colors hover:underline"
                   >
                     Remove now
                   </ConfirmSubmitButton>
@@ -94,7 +102,7 @@ export default async function SectionDetailPage({
           </li>
         ))}
         {(videos ?? []).length === 0 && (
-          <li className="p-4 text-sm text-stone-500">No videos in this section yet.</li>
+          <li className="p-4 text-sm text-ink-faint">No videos in this section yet.</li>
         )}
       </ul>
 

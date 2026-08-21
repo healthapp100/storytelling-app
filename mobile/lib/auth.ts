@@ -1,4 +1,21 @@
+import { AuthError } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+
+// Supabase's raw error messages are written for developers, not the person
+// typing into this form — translate the ones users will actually hit.
+function friendlyAuthError(error: AuthError): Error {
+  const message = error.message.toLowerCase();
+  if (message.includes("rate limit")) {
+    return new Error("Too many attempts too quickly — wait a minute and try again.");
+  }
+  if (message.includes("already registered") || message.includes("already exists")) {
+    return new Error("An account with that email or phone number already exists — try signing in instead.");
+  }
+  if (message.includes("invalid login credentials")) {
+    return new Error("That email/phone or password doesn't match an existing account.");
+  }
+  return new Error(error.message);
+}
 
 // Supabase Auth only ships email+password natively. Phone+password reuses
 // the same identity system by mapping the phone number to a synthetic,
@@ -33,7 +50,7 @@ export async function signUp(credential: Credential, displayName: string) {
     email,
     password: credential.password,
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
 
   // profiles row is also auto-created by a DB trigger (see supabase/migrations),
   // this fills in the fields the trigger can't know about.
@@ -57,7 +74,7 @@ export async function signIn(credential: Credential) {
     email,
     password: credential.password,
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 

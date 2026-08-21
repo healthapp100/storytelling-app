@@ -17,24 +17,28 @@ export default async function ContentPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900">Home content</h1>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Home screen</p>
+        <h1 className="mt-1 font-display text-3xl text-ink">Home content</h1>
+        <p className="mt-2 text-sm text-ink-muted">
           What every user sees on the home screen before anything else.
         </p>
       </div>
 
       <form
         action={updateIntroText}
-        className="space-y-3 rounded-lg border border-stone-200 bg-white p-4"
+        className="space-y-3 rounded-xl border border-border bg-paper-raised p-5"
       >
-        <h2 className="text-sm font-semibold text-stone-900">Intro text</h2>
+        <h2 className="font-display text-lg text-ink">Intro text</h2>
         <textarea
           name="home_intro_text"
           defaultValue={introText}
           rows={4}
-          className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink transition-colors focus:border-accent focus:outline-none"
         />
-        <button type="submit" className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white">
+        <button
+          type="submit"
+          className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+        >
           Save
         </button>
       </form>

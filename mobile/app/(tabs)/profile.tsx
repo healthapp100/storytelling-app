@@ -1,10 +1,17 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Pressy } from "../../components/Pressy";
 import { signOut } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/session";
+import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
 import type { Profile } from "../../types/database";
+
+function initialFor(name: string | null, fallback: string): string {
+  const source = name?.trim() || fallback;
+  return source.charAt(0).toUpperCase() || "?";
+}
 
 export default function ProfileScreen() {
   const { session } = useSession();
@@ -20,49 +27,80 @@ export default function ProfileScreen() {
       .then(({ data }) => setProfile(data));
   }, [session]);
 
+  const identifier = profile?.email ?? profile?.phone ?? "";
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.name}>{profile?.display_name ?? "Your account"}</Text>
-        <Text style={styles.identifier}>{profile?.email ?? profile?.phone ?? ""}</Text>
+        <View style={styles.identityCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarLabel}>{initialFor(profile?.display_name ?? null, identifier)}</Text>
+          </View>
+          <View style={styles.identityText}>
+            <Text style={styles.name}>{profile?.display_name || "Your account"}</Text>
+            <Text style={styles.identifier}>{identifier}</Text>
+          </View>
+        </View>
 
-        <Pressable style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
-          <Text style={styles.subscribeLabel}>Manage subscription</Text>
-        </Pressable>
+        <View style={styles.actions}>
+          <Pressy style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
+            <Text style={styles.subscribeLabel}>Manage subscription</Text>
+          </Pressy>
 
-        <Pressable
-          style={styles.signOutButton}
-          onPress={async () => {
-            await signOut();
-            router.replace("/(auth)/sign-in");
-          }}
-        >
-          <Text style={styles.signOutLabel}>Sign out</Text>
-        </Pressable>
+          <Pressy
+            style={styles.signOutButton}
+            onPress={async () => {
+              await signOut();
+              router.replace("/(auth)/sign-in");
+            }}
+          >
+            <Text style={styles.signOutLabel}>Sign out</Text>
+          </Pressy>
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 20, gap: 6 },
-  name: { fontSize: 22, fontWeight: "800" },
-  identifier: { fontSize: 15, color: "#666", marginBottom: 24 },
+  safeArea: { flex: 1, backgroundColor: colors.paper },
+  container: { flex: 1, padding: spacing.lg, gap: spacing.xl },
+  identityCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.paperRaised,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    ...shadow.card,
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarLabel: { fontFamily: fonts.display, fontSize: 22, color: colors.accentInk },
+  identityText: { gap: 2 },
+  name: { fontFamily: fonts.display, fontSize: 20, color: colors.ink },
+  identifier: { fontSize: 14, color: colors.inkMuted },
+  actions: { gap: spacing.sm },
   subscribeButton: {
-    backgroundColor: "#111",
-    borderRadius: 10,
-    paddingVertical: 12,
+    backgroundColor: colors.ink,
+    borderRadius: radii.md,
+    paddingVertical: 14,
     alignItems: "center",
-    marginBottom: 12,
   },
-  subscribeLabel: { color: "#fff", fontWeight: "700" },
+  subscribeLabel: { color: "#fff", fontWeight: "700", fontSize: 15 },
   signOutButton: {
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingVertical: 14,
     alignItems: "center",
+    backgroundColor: colors.paperRaised,
   },
-  signOutLabel: { fontWeight: "600" },
+  signOutLabel: { fontWeight: "600", color: colors.ink },
 });

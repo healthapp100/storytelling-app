@@ -15,10 +15,10 @@ select cron.schedule(
   '0 2 * * *', -- 02:00 UTC daily
   $$
   select net.http_post(
-    url := 'https://<project-ref>.supabase.co/functions/v1/expire-videos',
+    url := 'https://hqkuhapqbttphfidtsky.supabase.co/functions/v1/expire-videos',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer <service-role-key>'
+      'Authorization', 'Bearer <secret-key>'
     ),
     body := '{}'::jsonb
   );

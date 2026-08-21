@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Storytelling App",
-    "slug": "storytelling-app",
+    "slug": "health",
     "scheme": "storytellingapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,6 +24,12 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2ef9506d-a680-4a94-b3ac-f4345dbfd6d2"
+    },
     "plugins": [
       "expo-router",
       "expo-status-bar",
@@ -34,7 +40,16 @@
         {
           "icon": "./assets/icon.png"
         }
-      ]
-    ]
+      ],
+      "expo-font",
+      "expo-splash-screen"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2ef9506d-a680-4a94-b3ac-f4345dbfd6d2"
+      }
+    },
+    "owner": "healthapp1000"
   }
 }

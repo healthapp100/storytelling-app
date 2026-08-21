@@ -6,6 +6,9 @@ import { createVideo } from "../app/(admin)/sections/[id]/actions";
 
 type Stage = "idle" | "requesting-url" | "uploading" | "saving" | "done";
 
+const inputClass =
+  "w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none";
+
 export function VideoUploadForm({ sectionId }: { sectionId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -51,88 +54,85 @@ export function VideoUploadForm({ sectionId }: { sectionId: string }) {
     <form
       ref={formRef}
       onSubmit={handleSubmit}
-      className="space-y-3 rounded-lg border border-stone-200 bg-white p-4"
+      className="space-y-3 rounded-xl border border-border bg-paper-raised p-5"
     >
-      <h2 className="text-sm font-semibold text-stone-900">Upload a video</h2>
+      <h2 className="font-display text-lg text-ink">Upload a video</h2>
 
+      <input name="title" placeholder="Title" required className={inputClass} />
+      <textarea name="description" placeholder="Description (optional)" rows={2} className={inputClass} />
       <input
-        name="title"
-        placeholder="Title"
+        name="file"
+        type="file"
+        accept="video/*"
         required
-        className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+        className="w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-accent-ink"
       />
-      <textarea
-        name="description"
-        placeholder="Description (optional)"
-        rows={2}
-        className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
-      />
-      <input name="file" type="file" accept="video/*" required className="w-full text-sm" />
       <input
         name="duration_seconds"
         type="number"
         placeholder="Duration in seconds (optional)"
-        className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+        className={inputClass}
       />
 
       <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-stone-700">
+        <label className="flex items-center gap-2 text-sm text-ink-muted">
           <input
             type="radio"
             name="access_tier"
             value="subscription"
             checked={accessTier === "subscription"}
             onChange={() => setAccessTier("subscription")}
+            className="accent-accent"
           />
           Subscription
         </label>
-        <label className="flex items-center gap-2 text-sm text-stone-700">
+        <label className="flex items-center gap-2 text-sm text-ink-muted">
           <input
             type="radio"
             name="access_tier"
             value="one_time"
             checked={accessTier === "one_time"}
             onChange={() => setAccessTier("one_time")}
+            className="accent-accent"
           />
           Pay per video
         </label>
       </div>
       {accessTier === "one_time" && (
-        <input
-          name="price_cents"
-          type="number"
-          placeholder="Price in cents"
-          required
-          className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
+        <input name="price_cents" type="number" placeholder="Price in cents" required className={inputClass} />
       )}
 
-      <label className="block text-sm text-stone-700">
+      <label className="block text-sm text-ink-muted">
         Expiry date (mandatory — video is auto-deleted after this)
-        <input
-          name="expires_at"
-          type="datetime-local"
-          required
-          className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
+        <input name="expires_at" type="datetime-local" required className={`mt-1 ${inputClass}`} />
       </label>
 
-      <label className="flex items-center gap-2 text-sm text-stone-700">
-        <input type="checkbox" name="is_daily_featured" />
+      <label className="flex items-center gap-2 text-sm text-ink-muted">
+        <input type="checkbox" name="is_daily_featured" className="accent-accent" />
         Feature as Today&apos;s Video (replaces the current one)
       </label>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {stage === "uploading" && (
-        <p className="text-sm text-stone-500">Uploading… {progress}%</p>
+      {error && (
+        <p className="rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>
       )}
-      {stage === "requesting-url" && <p className="text-sm text-stone-500">Preparing upload…</p>}
-      {stage === "saving" && <p className="text-sm text-stone-500">Saving video details…</p>}
+      {stage === "uploading" && (
+        <div className="space-y-1">
+          <p className="text-sm text-ink-muted">Uploading… {progress}%</p>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-accent-soft">
+            <div
+              className="h-full rounded-full bg-accent transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {stage === "requesting-url" && <p className="text-sm text-ink-muted">Preparing upload…</p>}
+      {stage === "saving" && <p className="text-sm text-ink-muted">Saving video details…</p>}
 
       <button
         type="submit"
         disabled={busy}
-        className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink disabled:opacity-60"
       >
         {busy ? "Uploading…" : "Upload video"}
       </button>
