@@ -3,42 +3,65 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { configurePurchases, logOutPurchases } from "./purchases";
 import { registerForDailyVideoNotifications } from "./notifications";
+import type { Profile } from "../types/database";
 
 type SessionContextValue = {
   session: Session | null;
+  profile: Profile | null;
+  isAdmin: boolean;
   loading: boolean;
 };
 
-const SessionContext = createContext<SessionContextValue>({ session: null, loading: true });
+const SessionContext = createContext<SessionContextValue>({
+  session: null,
+  profile: null,
+  isAdmin: false,
+  loading: true,
+});
+
+async function fetchProfile(userId: string): Promise<Profile | null> {
+  const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  return data;
+}
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
       if (data.session) {
         configurePurchases(data.session.user.id);
         registerForDailyVideoNotifications(data.session.user.id);
+        setProfile(await fetchProfile(data.session.user.id));
       }
       setLoading(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       setSession(newSession);
       if (event === "SIGNED_IN" && newSession) {
         configurePurchases(newSession.user.id);
         registerForDailyVideoNotifications(newSession.user.id);
+        setProfile(await fetchProfile(newSession.user.id));
       }
-      if (event === "SIGNED_OUT") logOutPurchases();
+      if (event === "SIGNED_OUT") {
+        logOutPurchases();
+        setProfile(null);
+      }
     });
 
     return () => subscription.subscription.unsubscribe();
   }, []);
 
+  const isAdmin = profile?.role === "admin";
+
   return (
-    <SessionContext.Provider value={{ session, loading }}>{children}</SessionContext.Provider>
+    <SessionContext.Provider value={{ session, profile, isAdmin, loading }}>
+      {children}
+    </SessionContext.Provider>
   );
 }
 

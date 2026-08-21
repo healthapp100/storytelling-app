@@ -46,6 +46,10 @@ export default function RootLayout() {
           options={{ headerShown: true, title: "", headerStyle: { backgroundColor: colors.paper } }}
         />
         <Stack.Screen
+          name="admin-section/[id]"
+          options={{ headerShown: true, title: "", headerStyle: { backgroundColor: colors.paper } }}
+        />
+        <Stack.Screen
           name="subscribe"
           options={{
             headerShown: true,

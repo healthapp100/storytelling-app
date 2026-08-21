@@ -1,0 +1,110 @@
+"use client";
+
+import { useState } from "react";
+import type { Video } from "../types/database";
+import { updateVideo } from "../app/(admin)/sections/[id]/actions";
+
+const inputClass =
+  "w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink transition-colors focus:border-accent focus:outline-none";
+
+function toDateTimeLocal(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function EditVideoForm({ sectionId, video }: { sectionId: string; video: Video }) {
+  const [open, setOpen] = useState(false);
+  const [accessTier, setAccessTier] = useState<"subscription" | "one_time">(video.access_tier);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-sm font-medium text-ink-muted transition-colors hover:text-accent"
+      >
+        {open ? "Cancel" : "Edit"}
+      </button>
+
+      {open && (
+        <form
+          action={async (formData) => {
+            await updateVideo(sectionId, video.id, formData);
+            setOpen(false);
+          }}
+          className="mt-3 space-y-2 rounded-lg border border-border bg-paper p-3"
+        >
+          <input name="title" defaultValue={video.title} required className={inputClass} placeholder="Title" />
+          <textarea
+            name="description"
+            defaultValue={video.description ?? ""}
+            rows={2}
+            className={inputClass}
+            placeholder="Description"
+          />
+          <input
+            name="duration_seconds"
+            type="number"
+            defaultValue={video.duration_seconds ?? ""}
+            className={inputClass}
+            placeholder="Duration in seconds"
+          />
+
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm text-ink-muted">
+              <input
+                type="radio"
+                name="access_tier"
+                value="subscription"
+                checked={accessTier === "subscription"}
+                onChange={() => setAccessTier("subscription")}
+                className="accent-accent"
+              />
+              Subscription
+            </label>
+            <label className="flex items-center gap-2 text-sm text-ink-muted">
+              <input
+                type="radio"
+                name="access_tier"
+                value="one_time"
+                checked={accessTier === "one_time"}
+                onChange={() => setAccessTier("one_time")}
+                className="accent-accent"
+              />
+              Pay per video
+            </label>
+          </div>
+          {accessTier === "one_time" && (
+            <input
+              name="price_cents"
+              type="number"
+              defaultValue={video.price_cents ?? ""}
+              required
+              className={inputClass}
+              placeholder="Price in cents"
+            />
+          )}
+
+          <label className="block text-sm text-ink-muted">
+            Expiry date
+            <input
+              name="expires_at"
+              type="datetime-local"
+              defaultValue={toDateTimeLocal(video.expires_at)}
+              required
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+          >
+            Save
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}

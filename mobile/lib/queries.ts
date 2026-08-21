@@ -59,3 +59,23 @@ export function videoPlaybackUrl(video: Video): string {
   const publicBase = process.env.EXPO_PUBLIC_R2_PUBLIC_BASE_URL!;
   return `${publicBase}/${video.storage_key}`;
 }
+
+// --- Admin reads: unlike the subscriber-facing queries above, these don't
+// filter by status/active — an admin needs to see everything to manage it.
+// RLS still only returns rows at all if the caller's profile.role='admin'.
+
+export async function getAllVideosForSectionAdmin(sectionId: string): Promise<Video[]> {
+  const { data, error } = await supabase
+    .from("videos")
+    .select("*")
+    .eq("section_id", sectionId)
+    .order("posted_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+  const { data, error } = await supabase.from("subscription_plans").select("*").order("duration_days");
+  if (error) throw error;
+  return data ?? [];
+}

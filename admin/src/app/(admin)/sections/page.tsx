@@ -3,6 +3,7 @@ import { createClient } from "../../../lib/supabase/server";
 import type { Section } from "../../../types/database";
 import { createSection, deleteSection } from "./actions";
 import { ConfirmSubmitButton } from "../../../components/ConfirmSubmitButton";
+import { EditSectionForm } from "../../../components/EditSectionForm";
 
 export default async function SectionsPage() {
   const supabase = await createClient();
@@ -25,24 +26,26 @@ export default async function SectionsPage() {
 
       <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-paper-raised">
         {(sections ?? []).map((section) => (
-          <li
-            key={section.id}
-            className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-paper"
-          >
-            <Link href={`/sections/${section.id}`} className="flex-1">
-              <p className="font-medium text-ink">{section.title}</p>
-              {section.description && (
-                <p className="text-sm text-ink-muted">{section.description}</p>
-              )}
-            </Link>
-            <form action={deleteSection.bind(null, section.id)}>
-              <ConfirmSubmitButton
-                confirmMessage={`Delete "${section.title}" and all its videos? This can't be undone.`}
-                className="text-sm font-medium text-danger transition-colors hover:text-accent-ink hover:underline"
-              >
-                Delete
-              </ConfirmSubmitButton>
-            </form>
+          <li key={section.id} className="p-4 transition-colors hover:bg-paper">
+            <div className="flex items-center justify-between gap-4">
+              <Link href={`/sections/${section.id}`} className="flex-1">
+                <p className="font-medium text-ink">{section.title}</p>
+                {section.description && (
+                  <p className="text-sm text-ink-muted">{section.description}</p>
+                )}
+              </Link>
+              <div className="flex shrink-0 items-center gap-4">
+                <EditSectionForm section={section} />
+                <form action={deleteSection.bind(null, section.id)}>
+                  <ConfirmSubmitButton
+                    confirmMessage={`Delete "${section.title}" and all its videos? This can't be undone.`}
+                    className="text-sm font-medium text-danger transition-colors hover:text-accent-ink hover:underline"
+                  >
+                    Delete
+                  </ConfirmSubmitButton>
+                </form>
+              </div>
+            </div>
           </li>
         ))}
         {(sections ?? []).length === 0 && (

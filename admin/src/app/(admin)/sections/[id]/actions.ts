@@ -55,6 +55,45 @@ export async function createVideo(sectionId: string, formData: FormData) {
   revalidatePath(`/sections/${sectionId}`);
 }
 
+export async function updateVideo(sectionId: string, videoId: string, formData: FormData) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const durationSeconds = Number(formData.get("duration_seconds") ?? 0) || null;
+  const expiresAt = String(formData.get("expires_at") ?? "");
+  const accessTier = String(formData.get("access_tier") ?? "subscription") as
+    | "subscription"
+    | "one_time";
+  const priceCents = accessTier === "one_time" ? Number(formData.get("price_cents") ?? 0) : null;
+
+  if (!title || !expiresAt) {
+    throw new Error("Title and an expiry date are required.");
+  }
+  if (accessTier === "one_time" && (!priceCents || priceCents <= 0)) {
+    throw new Error("Pay-per-video content needs a price greater than zero.");
+  }
+
+  // Editing metadata never touches storage_key — swapping the actual file
+  // means uploading a new video, not editing this one.
+  const { error } = await supabase
+    .from("videos")
+    .update({
+      title,
+      description,
+      duration_seconds: durationSeconds,
+      expires_at: new Date(expiresAt).toISOString(),
+      access_tier: accessTier,
+      price_cents: priceCents,
+    })
+    .eq("id", videoId);
+  if (error) throw new Error(error.message);
+
+  await logActivity("update", "videos", videoId);
+  revalidatePath(`/sections/${sectionId}`);
+}
+
 export async function setDailyFeatured(sectionId: string, videoId: string) {
   await requireAdmin();
   const supabase = await createClient();
