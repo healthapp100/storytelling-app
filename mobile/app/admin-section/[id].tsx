@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -36,6 +36,7 @@ export default function AdminSectionDetail() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <Stack.Screen options={{ title: title ?? "Videos" }} />
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>{title ?? "Videos"}</Text>
 

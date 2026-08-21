@@ -1,7 +1,8 @@
 import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
+import { AppTextInput } from "../AppTextInput";
 import { createVideo } from "../../lib/adminActions";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { colors, radii, shadow, spacing } from "../../lib/theme";
@@ -78,8 +79,8 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   return (
     <View style={styles.card}>
       <Text style={styles.heading}>Upload a video</Text>
-      <TextInput style={styles.input} placeholder="Title" value={title} onChangeText={setTitle} />
-      <TextInput
+      <AppTextInput style={styles.input} placeholder="Title" value={title} onChangeText={setTitle} />
+      <AppTextInput
         style={styles.input}
         placeholder="Description (optional)"
         value={description}
@@ -101,7 +102,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
         </Pressable>
       </View>
       {accessTier === "one_time" && (
-        <TextInput
+        <AppTextInput
           style={styles.input}
           placeholder="Price in paise (100 = ₹1)"
           value={priceCents}
@@ -111,7 +112,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       )}
 
       <Text style={styles.label}>Expiry date (mandatory — video is auto-deleted after this)</Text>
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="YYYY-MM-DD HH:mm, e.g. 2026-08-25 18:00"
         value={expiresAt}

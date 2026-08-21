@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
+import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
 import { deleteSection, updateSection } from "../../lib/adminActions";
 import { colors, radii, spacing } from "../../lib/theme";
@@ -56,8 +57,8 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
   if (editing) {
     return (
       <View style={styles.card}>
-        <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Title" />
-        <TextInput
+        <AppTextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Title" />
+        <AppTextInput
           style={styles.input}
           value={description}
           onChangeText={setDescription}

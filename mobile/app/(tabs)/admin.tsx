@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { Pressy } from "../../components/Pressy";
+import { AppTextInput } from "../../components/AppTextInput";
 import { AdminSectionRow } from "../../components/admin/AdminSectionRow";
 import { createSection, updatePlan, upsertAppContent } from "../../lib/adminActions";
 import { getAppContent, getAllSubscriptionPlans, getSections } from "../../lib/queries";
@@ -140,8 +141,8 @@ export default function AdminDashboard() {
             ))}
           </View>
           <View style={styles.addCard}>
-            <TextInput style={styles.input} placeholder="New section title" value={newTitle} onChangeText={setNewTitle} />
-            <TextInput
+            <AppTextInput style={styles.input} placeholder="New section title" value={newTitle} onChangeText={setNewTitle} />
+            <AppTextInput
               style={styles.input}
               placeholder="Description (optional)"
               value={newDescription}
@@ -165,7 +166,7 @@ export default function AdminDashboard() {
         <View style={styles.block}>
           <Text style={styles.blockTitle}>Home content</Text>
           <View style={styles.addCard}>
-            <TextInput
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Intro text"
               value={introText}
@@ -195,7 +196,7 @@ function PlanRow({ plan, onSave }: { plan: SubscriptionPlan; onSave: (priceCents
   return (
     <View style={styles.planRow}>
       <Text style={styles.planLabel}>{PLAN_LABELS[plan.code]}</Text>
-      <TextInput
+      <AppTextInput
         style={styles.planInput}
         value={value}
         onChangeText={setValue}

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
+import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
 import { expireVideoNow, setDailyFeatured, updateVideo } from "../../lib/adminActions";
 import { colors, radii, spacing } from "../../lib/theme";
@@ -94,8 +95,8 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
 
       {editing ? (
         <View style={styles.editForm}>
-          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Title" />
-          <TextInput
+          <AppTextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Title" />
+          <AppTextInput
             style={styles.input}
             value={description}
             onChangeText={setDescription}

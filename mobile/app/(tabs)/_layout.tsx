@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import type { ColorValue } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSession } from "../../lib/session";
 import { colors } from "../../lib/theme";
 
@@ -12,6 +13,7 @@ function TabIcon({ name, color, size }: { name: IconName; color: ColorValue; siz
 
 export default function TabsLayout() {
   const { session, loading, isAdmin } = useSession();
+  const insets = useSafeAreaInsets();
 
   if (!loading && !session) {
     return <Redirect href="/(auth)/sign-in" />;
@@ -23,7 +25,17 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.inkFaint,
-        tabBarStyle: { backgroundColor: colors.paperRaised, borderTopColor: colors.border, height: 60, paddingTop: 6 },
+        tabBarStyle: {
+          backgroundColor: colors.paperRaised,
+          borderTopColor: colors.border,
+          // Fixed heights ignore the phone's own nav bar/gesture area unless
+          // insets.bottom is added back in — without this, part of the tab
+          // bar renders under the system nav buttons on Android, and taps
+          // meant for our tabs land on Home/Back/Recents instead.
+          height: 54 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: insets.bottom,
+        },
         tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
       }}
     >

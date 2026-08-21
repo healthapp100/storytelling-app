@@ -1,5 +1,5 @@
 import { useVideoPlayer, VideoView } from "expo-video";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
@@ -29,6 +29,7 @@ export default function VideoPlayer() {
   if (video === null) {
     return (
       <View style={styles.center}>
+        <Stack.Screen options={{ title: "Loading…" }} />
         <ActivityIndicator color={colors.accent} />
       </View>
     );
@@ -37,6 +38,7 @@ export default function VideoPlayer() {
   if (video === "denied") {
     return (
       <View style={styles.center}>
+        <Stack.Screen options={{ title: "Not available" }} />
         <Text style={styles.deniedTitle}>Not available right now</Text>
         <Text style={styles.deniedText}>
           This video may have expired, or it needs a subscription to watch.
@@ -50,6 +52,7 @@ export default function VideoPlayer() {
 
   return (
     <ScrollView style={styles.container}>
+      <Stack.Screen options={{ title: video.title }} />
       <VideoView style={styles.player} player={player} contentFit="contain" nativeControls />
       <View style={styles.details}>
         <Text style={styles.title}>{video.title}</Text>
