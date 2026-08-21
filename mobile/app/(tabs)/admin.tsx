@@ -193,6 +193,15 @@ export default function AdminDashboard() {
 
 function PlanRow({ plan, onSave }: { plan: SubscriptionPlan; onSave: (priceCents: number) => void }) {
   const [value, setValue] = useState(String(plan.price_cents));
+
+  // Keeps this row in sync if the price changes from elsewhere (another
+  // admin, or the realtime refresh after this same save completes) — a
+  // plain useState initializer only runs once and would otherwise go
+  // stale while this row's component instance stays mounted.
+  useEffect(() => {
+    setValue(String(plan.price_cents));
+  }, [plan.price_cents]);
+
   return (
     <View style={styles.planRow}>
       <Text style={styles.planLabel}>{PLAN_LABELS[plan.code]}</Text>
