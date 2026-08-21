@@ -1,4 +1,7 @@
-import * as FileSystem from "expo-file-system";
+// The new File/Directory API (expo-file-system's default export as of
+// SDK 54+) has no direct multipart/binary upload helper yet — uploadAsync
+// still only exists under the legacy import path.
+import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "./supabase";
 
 const BUCKET = "videos";
