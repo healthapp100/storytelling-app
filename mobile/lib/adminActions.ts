@@ -129,8 +129,8 @@ export async function setDailyFeatured(videoId: string) {
 
 // Marks the video expired immediately rather than hard-deleting the row —
 // see the matching comment in admin/src/app/(admin)/sections/[id]/actions.ts
-// for why: only the nightly sweep purges the R2 file, and it only looks at
-// rows still marked live/scheduled with a past expiry.
+// for why: only the nightly sweep purges the storage file, and it only
+// looks at rows still marked live/scheduled with a past expiry.
 export async function expireVideoNow(videoId: string) {
   const { error } = await supabase
     .from("videos")

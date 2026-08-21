@@ -10,11 +10,11 @@
 Per your call, all the manual account/infra setup is deferred to the end — every line of app, admin, and backend code is written and either type-checks or builds clean. Nothing below requires more code; it requires accounts and a few clicks.
 
 ### 1. Supabase
-- Create a project, run `supabase/README.md` steps 1–5 (push migrations, set Edge Function secrets, deploy the four functions), then step 6 to promote yourself to admin.
+- Create a project, run `supabase/README.md` steps 1–5 (push migrations — this now also creates the `videos` Storage bucket — set the RevenueCat webhook secret, deploy the three functions), then step 5 to promote yourself to admin.
 - To stop the free tier's project from pausing after 7 idle days, add two repo secrets in **Settings → Secrets and variables → Actions**: `SUPABASE_URL` and `SUPABASE_ANON_KEY` (both from Project Settings → API). [`.github/workflows/keep-supabase-awake.yml`](.github/workflows/keep-supabase-awake.yml) then pings it every 3 days automatically — nothing else to do. Only matters during quiet dev stretches; once real users are hitting the app daily, it's a no-op.
 
-### 2. Cloudflare R2 (video storage)
-- Create an R2 bucket, an API token (Account → R2 → Manage API Tokens) for `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`, and enable the bucket's public dev URL (or a custom domain) for `EXPO_PUBLIC_R2_PUBLIC_BASE_URL`.
+### 2. Video storage — already done, no account needed
+- Videos live in Supabase Storage (the `videos` bucket, created by the migrations in step 1) — no separate Cloudflare R2 account, API token, or payment method required. This replaced the original R2 plan since R2 needed a card/PayPal on file that wasn't available; functionally it's a drop-in swap, not a compromise, and can move to R2 later without touching the data model. See `supabase/README.md`.
 
 ### 3. RevenueCat
 - Create a RevenueCat project, add your iOS/Android apps, and create products matching `subscription_plans` (daily/weekly/monthly) in App Store Connect and Play Console first — RevenueCat mirrors the store's products, not the other way around.
@@ -48,7 +48,7 @@ cd admin && cp .env.example .env.local && npm install && npm run dev
 
 - **Auth**: email+password and phone+password, one Supabase identity underneath, persistent session (no forced expiry), native autofill.
 - **Content model**: sections → videos, mandatory expiry dates, subscription-gated or pay-per-video, "today's featured video."
-- **Video lifecycle**: presigned direct-to-R2 upload from the admin panel, nightly expiry sweep that deletes the R2 file and marks the row `deleted`.
+- **Video lifecycle**: direct-to-Supabase-Storage upload from the admin panel and the in-app Admin tab, nightly expiry sweep that deletes the storage file and marks the row `deleted`.
 - **Subscriptions**: RevenueCat purchase flow in the app, webhook-synced entitlements, RLS that gates video access on those entitlements — no app-side access checks to trust.
 - **Push notifications**: device registration, a DB trigger on "today's video" being set, an Edge Function that fans the push out via Expo's push API, and tap-to-open deep linking back to that video.
 - **Admin panel**: sections and videos CRUD, pricing editor, home-page content editor (including the static intro video), an admin activity log — all gated by the same RLS as the app, not just page-level checks.

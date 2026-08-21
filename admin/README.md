@@ -15,5 +15,5 @@ Sign in with an account already promoted to `admin` (see `../supabase/README.md`
 ## Notes
 
 - Never put the Supabase **service role** key in this app. Every write goes through RLS using the signed-in admin's own session — see `supabase/migrations/0002_rls.sql`.
-- Video upload goes browser → `r2-upload-url` Edge Function (for a presigned URL) → directly to R2 → then a Server Action writes the `videos` row. The admin app never touches R2 credentials.
-- "Remove now" on a video sets it to expire immediately rather than hard-deleting the row, so the nightly `expire-videos` sweep still purges the R2 file. See the comment in `src/app/(admin)/sections/[id]/actions.ts`.
+- Video upload goes browser → directly to the `videos` bucket in Supabase Storage (using the admin's own session, enforced by `storage.objects` RLS in `supabase/migrations/0007_storage.sql`) → then a Server Action writes the `videos` row. No presigned-URL step, no separate storage credentials needed.
+- "Remove now" on a video sets it to expire immediately rather than hard-deleting the row, so the nightly `expire-videos` sweep still purges the storage file. See the comment in `src/app/(admin)/sections/[id]/actions.ts`.

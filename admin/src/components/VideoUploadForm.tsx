@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { uploadFileToR2 } from "../lib/r2-upload";
+import { uploadFileToStorage } from "../lib/storage-upload";
 import { createVideo } from "../app/(admin)/sections/[id]/actions";
 
 type Stage = "idle" | "requesting-url" | "uploading" | "saving" | "done";
@@ -31,7 +31,7 @@ export function VideoUploadForm({ sectionId }: { sectionId: string }) {
     try {
       setStage("requesting-url");
       setStage("uploading");
-      const { storageKey } = await uploadFileToR2(file, setProgress);
+      const { storageKey } = await uploadFileToStorage(file, setProgress);
 
       setStage("saving");
       const formData = new FormData(form);

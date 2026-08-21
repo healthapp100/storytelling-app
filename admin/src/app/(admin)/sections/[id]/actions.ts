@@ -114,7 +114,7 @@ export async function expireVideoNow(sectionId: string, videoId: string) {
   const supabase = await createClient();
 
   // Marks the row expired immediately; the nightly sweep (or a manual run
-  // of the expire-videos function) picks it up and purges the R2 object.
+  // of the expire-videos function) picks it up and purges the storage object.
   const { error } = await supabase
     .from("videos")
     .update({ status: "expired", expires_at: new Date().toISOString() })
@@ -126,7 +126,7 @@ export async function expireVideoNow(sectionId: string, videoId: string) {
 }
 
 // There's deliberately no hard-delete action: deleting the row outright
-// would leave its file orphaned in R2 forever, since only the nightly sweep
+// would leave its file orphaned in storage forever, since only the nightly sweep
 // (status in ('live','scheduled') AND expires_at < now()) purges storage.
 // "Remove now" in the UI calls expireVideoNow above instead, which the sweep
 // will pick up and clean up properly on its next run.

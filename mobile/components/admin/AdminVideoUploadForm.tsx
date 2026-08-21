@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { createVideo } from "../../lib/adminActions";
-import { uploadLocalFileToR2 } from "../../lib/r2Upload";
+import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { colors, radii, shadow, spacing } from "../../lib/theme";
 
 export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: string; onUploaded: () => void }) {
@@ -41,7 +41,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
     setUploading(true);
     try {
       setProgressLabel("Uploading video…");
-      const { storageKey } = await uploadLocalFileToR2(
+      const { storageKey } = await uploadLocalFileToStorage(
         file.uri,
         file.name ?? "video.mp4",
         file.mimeType ?? "video/mp4"

@@ -5,7 +5,7 @@ Expo Router app — sign-in, sections/videos, today's video, subscriptions, push
 ## Setup
 
 ```bash
-cp .env.example .env   # fill in Supabase + R2 + RevenueCat values
+cp .env.example .env   # fill in Supabase + RevenueCat values
 npm install
 npx expo start
 ```

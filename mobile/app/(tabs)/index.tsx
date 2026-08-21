@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { Pressy } from "../../components/Pressy";
-import { getAppContent, getTodaysVideo } from "../../lib/queries";
+import { getAppContent, getTodaysVideo, storagePublicUrl } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
@@ -28,8 +28,7 @@ export default function Home() {
       getTodaysVideo(),
     ]);
     setIntroText((about?.value as string) ?? "");
-    const publicBase = process.env.EXPO_PUBLIC_R2_PUBLIC_BASE_URL;
-    setIntroVideoUrl(introKey?.value && publicBase ? `${publicBase}/${introKey.value as string}` : null);
+    setIntroVideoUrl(introKey?.value ? storagePublicUrl(introKey.value as string) : null);
     setTodaysVideo(today);
     setLoading(false);
   }, []);

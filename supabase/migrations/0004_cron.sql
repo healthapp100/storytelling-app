@@ -1,5 +1,5 @@
 -- Nightly sweep that expires videos past their expires_at and purges them
--- from R2, via the `expire-videos` Edge Function. See ARCHITECTURE.md §5.
+-- from Supabase Storage, via the `expire-videos` Edge Function. See ARCHITECTURE.md §5.
 --
 -- Requires the pg_cron and pg_net extensions, enabled by default on
 -- Supabase projects (Database → Extensions if not).

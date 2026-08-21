@@ -16,5 +16,5 @@ insert into public.subscription_plans (code, price_cents, duration_days, active)
 insert into public.app_content (key, value) values
   ('home_intro_text', '"Welcome — this app brings you daily stories, slokas, and puranas, explained simply."'),
   ('home_intro_video_key', 'null');
--- home_intro_video_key should be set to the R2 object key of the static
+-- home_intro_video_key should be set to the Supabase Storage object key of the static
 -- 2-3 minute intro video once the admin uploads it.

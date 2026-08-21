@@ -56,7 +56,7 @@ export async function deleteSection(sectionId: string) {
   const supabase = await createClient();
 
   // Cascades to that section's videos at the DB level (see migration
-  // 0001_init.sql). Their R2 files are NOT cleaned up by this — only the
+  // 0001_init.sql). Their storage files are NOT cleaned up by this — only the
   // nightly expiry sweep purges storage. Fine for reorganizing empty/unused
   // sections; move videos out first if the section is still live.
   const { error } = await supabase.from("sections").delete().eq("id", sectionId);

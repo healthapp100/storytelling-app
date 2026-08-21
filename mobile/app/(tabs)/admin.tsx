@@ -14,7 +14,7 @@ import { Pressy } from "../../components/Pressy";
 import { AdminSectionRow } from "../../components/admin/AdminSectionRow";
 import { createSection, updatePlan, upsertAppContent } from "../../lib/adminActions";
 import { getAppContent, getAllSubscriptionPlans, getSections } from "../../lib/queries";
-import { uploadLocalFileToR2 } from "../../lib/r2Upload";
+import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import * as DocumentPicker from "expo-document-picker";
 import { useSession } from "../../lib/session";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
     const file = result.assets[0];
     setIntroUploading(true);
     try {
-      const { storageKey } = await uploadLocalFileToR2(
+      const { storageKey } = await uploadLocalFileToStorage(
         file.uri,
         file.name ?? "intro.mp4",
         file.mimeType ?? "video/mp4"

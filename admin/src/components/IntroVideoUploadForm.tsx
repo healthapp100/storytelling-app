@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { uploadFileToR2 } from "../lib/r2-upload";
+import { uploadFileToStorage } from "../lib/storage-upload";
 import { upsertAppContent } from "../app/(admin)/content/actions";
 
 export function IntroVideoUploadForm({ currentKey }: { currentKey: string | null }) {
@@ -15,7 +15,7 @@ export function IntroVideoUploadForm({ currentKey }: { currentKey: string | null
     setError(null);
     setUploading(true);
     try {
-      const { storageKey } = await uploadFileToR2(file, setProgress);
+      const { storageKey } = await uploadFileToStorage(file, setProgress);
       await upsertAppContent("home_intro_video_key", storageKey);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");

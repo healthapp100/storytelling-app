@@ -1,15 +1,17 @@
 
 # Storytelling App — Architecture & Data Model
 
-Status: draft v1 · Owner: TBD · Last updated 2026-08-20
+Status: draft v1 · Owner: TBD · Last updated 2026-08-21
 
 This document covers system architecture, auth design, the full data model, video lifecycle, subscriptions/payments, and the storage decision. It's the source of truth to build against — update it when a decision changes.
+
+> **Update, 2026-08-21 — video storage is Supabase Storage, not R2.** The R2 plan below was the original recommendation and the reasoning still holds if you want to move to it later. In practice, R2 requires a card or PayPal on file to activate at all (even for free-tier usage), which wasn't available — so the app currently uses **Supabase Storage** instead: a public `videos` bucket with admin-only write policies, uploaded to directly using the signed-in user's own session (no presigned-URL step, no separate storage credentials). This is a drop-in swap, not a compromise — the `videos` table still just stores a key/URL, so moving to R2 or anywhere else later doesn't touch the data model. See `supabase/README.md` and migration `0007_storage.sql`.
 
 ---
 
 ## 1. Decisions made this round
 
-**Video storage — Cloudflare R2, not Bunny or Cloudflare Stream.**
+**Video storage — Cloudflare R2, not Bunny or Cloudflare Stream.** *(superseded — see the update note above; currently running on Supabase Storage instead, for the reason stated there.)*
 Neither Bunny Stream nor Cloudflare Stream has a free tier — both are pay-as-you-go from the first GB (Bunny ≈ $0.005/GB storage + cheap egress; Cloudflare Stream ≈ $5 per 1,000 minutes stored). Given that most videos are deleted within a day or a week, the actual storage footprint at any moment stays small, which changes the calculus:
 
 - **Cloudflare R2**: 10 GB storage and all egress free, permanently (no trial window). No built-in transcoding or adaptive bitrate — you upload an MP4, the app plays it back via progressive download/native `<Video>` component. For 30–60 minute talking-head/narration-style videos at a reasonable bitrate, this is fine on mobile and costs nothing at your rotation volume.
@@ -36,13 +38,13 @@ flowchart TB
         CRON["pg_cron scheduler"]
     end
 
-    R2["Cloudflare R2<br/>(video files, thumbnails)"]
+    STORAGE["Supabase Storage<br/>(video files, thumbnails)"]
     RC["RevenueCat<br/>(subscription entitlements)"]
     STORES["App Store / Play Store<br/>(in-app purchase billing)"]
 
     MA -->|sign in / fetch content| AUTH
     MA -->|read sections, videos,<br/>entitlements| PG
-    MA -->|stream| R2
+    MA -->|stream| STORAGE
     MA -->|purchase flow| RC
     RC --> STORES
     RC -->|webhook: entitlement changed| EDGE
@@ -50,16 +52,15 @@ flowchart TB
 
     AD -->|admin login| AUTH
     AD -->|CRUD content, pricing| PG
-    AD -->|upload video| EDGE
-    EDGE -->|store file| R2
-    EDGE -->|write metadata + expires_at| PG
+    AD -->|upload video, own session| STORAGE
+    AD -->|write metadata + expires_at| PG
 
     CRON -->|nightly: find expired| EDGE
-    EDGE -->|delete expired file| R2
+    EDGE -->|delete expired file| STORAGE
     EDGE -->|mark expired/deleted| PG
 ```
 
-**Why this shape:** Supabase is the single backend (auth + DB + serverless functions + scheduling) so there's one place to reason about permissions and state. R2 only ever holds bytes — no business logic lives there. RevenueCat is the only component allowed to touch real billing, because Apple/Google require IAP for digital subscriptions inside a native app; a custom payment gateway for subscriptions would get the app rejected.
+**Why this shape:** Supabase is the single backend (auth + DB + storage + serverless functions + scheduling) so there's one place to reason about permissions and state. Storage only ever holds bytes — no business logic lives there, and writes are gated by `storage.objects` RLS rather than a separate credentialed service. RevenueCat is the only component allowed to touch real billing, because Apple/Google require IAP for digital subscriptions inside a native app; a custom payment gateway for subscriptions would get the app rejected.
 
 ---
 
@@ -119,7 +120,7 @@ erDiagram
         text title
         text description
         text thumbnail_url
-        text storage_key "R2 object path"
+        text storage_key "Storage object path"
         int duration_seconds
         timestamptz posted_at
         timestamptz expires_at "NOT NULL — mandatory"
@@ -200,13 +201,13 @@ stateDiagram-v2
     [*] --> scheduled : admin uploads, sets expires_at
     scheduled --> live : posted_at reached
     live --> expired : pg_cron sweep finds expires_at < now()
-    expired --> deleted : Edge Function purges R2 object
+    expired --> deleted : Edge Function purges storage object
     deleted --> [*]
 ```
 
 - Admin upload form (in the admin panel) asks for: title, description, section, thumbnail, video file, duration (auto-detected), access tier (subscription-gated vs. pay-per-video + price), and **expiry date** (required, defaults suggested per section — e.g. daily uploads default to +1 day, weekly-tier content to next Sunday).
-- Upload flow: admin panel requests a short-lived signed R2 upload URL from an Edge Function, uploads the file directly to R2 (bypasses Supabase as a relay, keeps it fast and free of Supabase egress), then writes the row to `videos` with the returned object key.
-- `pg_cron` runs nightly (e.g. 2:00 AM), calling an Edge Function that: finds `videos WHERE status='live' AND expires_at < now()`, deletes the R2 object, sets `status='deleted'`. Weekly-tier content simply gets `expires_at` set to the following Sunday at upload time — no separate "weekly" code path needed.
+- Upload flow: admin panel (or the in-app Admin tab) uploads the file directly to the `videos` Supabase Storage bucket using the signed-in admin's own session — `storage.objects` RLS enforces admin-only writes, so there's no presigned-URL step or separate storage credentials — then writes the row to `videos` with the resulting object key.
+- `pg_cron` runs nightly (e.g. 2:00 AM), calling an Edge Function that: finds `videos WHERE status='live' AND expires_at < now()`, deletes the storage object, sets `status='deleted'`. Weekly-tier content simply gets `expires_at` set to the following Sunday at upload time — no separate "weekly" code path needed.
 
 ---
 
@@ -237,7 +238,7 @@ stateDiagram-v2
 | Mobile app | Expo (React Native) | one codebase → iOS + Play Store, EAS handles builds/submission, OTA updates for JS-only changes |
 | Admin panel | Next.js | fast to build, deploys anywhere, shares the Supabase client/types with the mobile app |
 | Backend | Supabase (Postgres, Auth, Edge Functions, pg_cron) | one system for auth + data + scheduled jobs, generous free tier for everything except large binary storage |
-| Video storage | Cloudflare R2 | free egress + 10 GB free storage matches a fast-rotating video catalog; upgrade path to Bunny Stream if adaptive bitrate is needed later |
+| Video storage | Supabase Storage (originally planned as Cloudflare R2 — see the update note in §1) | bundled into the same Supabase project, no separate account or payment method; public bucket + admin-only RLS on writes, same drop-in-URL model R2 would have had |
 | Subscriptions | RevenueCat + native IAP | required by Apple/Google for digital subscriptions; RevenueCat avoids writing StoreKit/Play Billing directly |
 | CI/CD | GitHub + EAS Build/Submit, GitHub Actions for admin panel | one pipeline per surface, both feeding from the same repo |
 

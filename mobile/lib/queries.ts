@@ -56,8 +56,12 @@ export async function getVideo(id: string): Promise<Video | null> {
 // RLS already blocks the row if the viewer isn't entitled, so a successful
 // fetch above is itself sufficient proof of access — no separate check needed.
 export function videoPlaybackUrl(video: Video): string {
-  const publicBase = process.env.EXPO_PUBLIC_R2_PUBLIC_BASE_URL!;
-  return `${publicBase}/${video.storage_key}`;
+  return storagePublicUrl(video.storage_key);
+}
+
+export function storagePublicUrl(storageKey: string): string {
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+  return `${supabaseUrl}/storage/v1/object/public/videos/${storageKey}`;
 }
 
 // --- Admin reads: unlike the subscriber-facing queries above, these don't

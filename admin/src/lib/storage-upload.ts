@@ -1,6 +1,12 @@
 import { createClient } from "./supabase/client";
 
-export async function uploadFileToR2(
+const BUCKET = "videos";
+
+// Uploads straight to Supabase Storage using the signed-in admin's own
+// session — the storage.objects RLS policies (0007_storage.sql) are what
+// actually enforce "only admins can write here," not this code. No
+// presigned-URL round trip needed, unlike the R2 setup this replaced.
+export async function uploadFileToStorage(
   file: File,
   onProgress?: (percent: number) => void
 ): Promise<{ storageKey: string }> {
@@ -9,23 +15,15 @@ export async function uploadFileToR2(
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) throw new Error("Not signed in.");
 
-  const functionsUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/r2-upload-url`;
-  const urlResponse = await fetch(functionsUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-  });
-  if (!urlResponse.ok) {
-    throw new Error(
-      `Could not get an upload URL (${urlResponse.status}). Is the r2-upload-url function deployed?`
-    );
-  }
-  const { uploadUrl, storageKey } = await urlResponse.json();
+  const storageKey = `videos/${Date.now()}-${file.name}`;
+  const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/${BUCKET}/${storageKey}`;
 
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("PUT", uploadUrl);
+    xhr.open("POST", uploadUrl);
     xhr.setRequestHeader("Content-Type", file.type);
+    xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+    xhr.setRequestHeader("apikey", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
         onProgress(Math.round((event.loaded / event.total) * 100));
