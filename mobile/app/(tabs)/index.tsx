@@ -1,9 +1,10 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -55,26 +56,39 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View>
-          <Text style={styles.eyebrow}>Every day, a new story</Text>
-          <Text style={styles.heading}>Storytelling</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.flex1}>
+            <Text style={styles.eyebrow}>Every day, a new story</Text>
+            <Text style={styles.heading}>Storytelling</Text>
+          </View>
+          <View style={styles.brandMark}>
+            <Ionicons name="flame" size={20} color={colors.accent} />
+          </View>
         </View>
         {introText ? <Text style={styles.intro}>{introText}</Text> : null}
 
-        {todaysVideo && (
+        {todaysVideo ? (
           <Pressy
             style={styles.todayCard}
             onPress={() => router.push({ pathname: "/video/[id]", params: { id: todaysVideo.id } })}
           >
-            <Text style={styles.todayLabel}>Today&apos;s story</Text>
+            <View style={styles.todayLabelRow}>
+              <Ionicons name="sparkles" size={13} color={colors.accentSoft} />
+              <Text style={styles.todayLabel}>Today&apos;s story</Text>
+            </View>
             <Text style={styles.todayTitle}>{todaysVideo.title}</Text>
             <View style={styles.todayCtaRow}>
               <Text style={styles.todayCta}>Watch now</Text>
-              <Text style={styles.todayCtaArrow}>→</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.accent} />
             </View>
           </Pressy>
+        ) : (
+          <View style={styles.emptyCard}>
+            <Ionicons name="moon-outline" size={22} color={colors.inkFaint} />
+            <Text style={styles.emptyText}>No story featured yet today — check back soon.</Text>
+          </View>
         )}
 
         {introVideoUrl && (
@@ -92,6 +106,16 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
   container: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
+  flex1: { flex: 1 },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  brandMark: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   eyebrow: {
     fontSize: 12,
     fontWeight: "700",
@@ -103,18 +127,28 @@ const styles = StyleSheet.create({
   heading: { fontFamily: fonts.display, fontSize: 34, color: colors.ink },
   intro: { fontSize: 15.5, color: colors.inkMuted, lineHeight: 23 },
   todayCard: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.night,
     borderRadius: radii.lg,
     padding: spacing.lg,
     gap: spacing.xs,
     ...shadow.card,
   },
-  todayLabel: { color: "#D8B79A", fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: "700" },
+  todayLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  todayLabel: { color: colors.accentSoft, fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: "700" },
   todayTitle: { color: "#fff", fontFamily: fonts.display, fontSize: 22, marginTop: 2 },
   todayCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.md },
   todayCta: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  todayCtaArrow: { color: colors.accent, fontWeight: "700", fontSize: 16 },
+  emptyCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderStyle: "dashed",
+    padding: spacing.lg,
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  emptyText: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
   introVideoWrap: { gap: spacing.sm },
   sectionLabel: { fontSize: 13, color: colors.inkMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6 },
-  introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: radii.md, backgroundColor: colors.ink },
+  introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: radii.md, backgroundColor: colors.night },
 });

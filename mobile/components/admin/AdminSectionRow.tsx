@@ -1,7 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { Pressy } from "../Pressy";
+import { TextButton } from "../TextButton";
 import { deleteSection, updateSection } from "../../lib/adminActions";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Section } from "../../types/database";
@@ -65,9 +67,9 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
           <Pressy style={styles.saveButton} onPress={handleSave} disabled={saving}>
             <Text style={styles.saveLabel}>{saving ? "Saving…" : "Save"}</Text>
           </Pressy>
-          <Pressable onPress={() => setEditing(false)}>
-            <Text style={styles.cancelLabel}>Cancel</Text>
-          </Pressable>
+          <TextButton style={styles.cancelLabel} onPress={() => setEditing(false)}>
+            Cancel
+          </TextButton>
         </View>
       </View>
     );
@@ -79,19 +81,27 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
         style={styles.rowContent}
         onPress={() => router.push({ pathname: "/admin-section/[id]", params: { id: section.id, title: section.title } })}
       >
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{section.title}</Text>
-          {section.description ? <Text style={styles.description}>{section.description}</Text> : null}
+        <View style={styles.titleCol}>
+          <Text style={styles.title} numberOfLines={2}>
+            {section.title}
+          </Text>
+          {section.description ? (
+            <Text style={styles.description} numberOfLines={1}>
+              {section.description}
+            </Text>
+          ) : null}
         </View>
-        <Text style={styles.arrow}>Manage videos →</Text>
+        <View style={styles.manageIconWrap}>
+          <Ionicons name="videocam-outline" size={16} color={colors.accentInk} />
+        </View>
       </Pressy>
       <View style={styles.row}>
-        <Pressable onPress={() => setEditing(true)}>
-          <Text style={styles.editLabel}>Edit</Text>
-        </Pressable>
-        <Pressable onPress={handleDelete}>
-          <Text style={styles.deleteLabel}>Delete</Text>
-        </Pressable>
+        <TextButton style={styles.editLabel} onPress={() => setEditing(true)}>
+          Edit
+        </TextButton>
+        <TextButton style={styles.deleteLabel} onPress={handleDelete}>
+          Delete
+        </TextButton>
       </View>
     </View>
   );
@@ -107,9 +117,17 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   rowContent: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  titleCol: { flex: 1, gap: 2 },
   title: { fontSize: 16, fontWeight: "700", color: colors.ink },
   description: { fontSize: 13, color: colors.inkMuted },
-  arrow: { fontSize: 12, color: colors.accent, fontWeight: "700" },
+  manageIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   row: { flexDirection: "row", gap: spacing.lg },
   editLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
   deleteLabel: { color: colors.danger, fontWeight: "600", fontSize: 13 },
@@ -122,7 +140,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink,
   },
-  saveButton: { backgroundColor: colors.ink, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 14 },
+  saveButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 14 },
   saveLabel: { color: "#fff", fontWeight: "700", fontSize: 13 },
   cancelLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13, alignSelf: "center" },
 });

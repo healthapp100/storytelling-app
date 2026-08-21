@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { Pressy } from "../Pressy";
+import { TextButton } from "../TextButton";
 import { expireVideoNow, setDailyFeatured, updateVideo } from "../../lib/adminActions";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
@@ -74,7 +75,9 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>{video.title}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {video.title}
+        </Text>
         <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
           <Text style={[styles.badgeLabel, { color: statusStyle.fg }]}>{video.status}</Text>
         </View>
@@ -102,25 +105,25 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
             <Pressy style={styles.saveButton} onPress={handleSave} disabled={saving}>
               <Text style={styles.saveLabel}>{saving ? "Saving…" : "Save"}</Text>
             </Pressy>
-            <Pressable onPress={() => setEditing(false)}>
-              <Text style={styles.cancelLabel}>Cancel</Text>
-            </Pressable>
+            <TextButton style={styles.cancelLabel} onPress={() => setEditing(false)}>
+              Cancel
+            </TextButton>
           </View>
         </View>
       ) : (
         video.status === "live" && (
           <View style={styles.row}>
-            <Pressable onPress={() => setEditing(true)}>
-              <Text style={styles.editLabel}>Edit</Text>
-            </Pressable>
+            <TextButton style={styles.editLabel} onPress={() => setEditing(true)}>
+              Edit
+            </TextButton>
             {!video.is_daily_featured && (
-              <Pressable onPress={handleFeature}>
-                <Text style={styles.featureLabel}>Feature</Text>
-              </Pressable>
+              <TextButton style={styles.featureLabel} onPress={handleFeature}>
+                Feature
+              </TextButton>
             )}
-            <Pressable onPress={handleExpire}>
-              <Text style={styles.deleteLabel}>Remove now</Text>
-            </Pressable>
+            <TextButton style={styles.deleteLabel} onPress={handleExpire}>
+              Remove now
+            </TextButton>
           </View>
         )
       )}
@@ -138,7 +141,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   headerRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs, flexWrap: "wrap" },
-  title: { fontSize: 15, fontWeight: "700", color: colors.ink },
+  title: { fontSize: 15, fontWeight: "700", color: colors.ink, flexShrink: 1 },
   badge: { borderRadius: radii.pill, paddingHorizontal: 8, paddingVertical: 2 },
   badgeLabel: { fontSize: 11, fontWeight: "700" },
   meta: { fontSize: 12, color: colors.inkMuted },
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink,
   },
-  saveButton: { backgroundColor: colors.ink, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 14 },
+  saveButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 14 },
   saveLabel: { color: "#fff", fontWeight: "700", fontSize: 13 },
   cancelLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13, alignSelf: "center" },
 });

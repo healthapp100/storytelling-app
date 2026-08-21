@@ -1,6 +1,7 @@
 import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../components/Pressy";
 import { getSubscriptionPlans } from "../lib/queries";
 import { purchasePackageByIdentifier, restorePurchases } from "../lib/purchases";
@@ -57,14 +58,14 @@ export default function Subscribe() {
 
   if (!plans) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["bottom", "left", "right"]}>
         <ActivityIndicator color={colors.accent} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Choose a plan</Text>
         <Text style={styles.subheading}>

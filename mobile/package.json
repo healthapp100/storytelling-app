@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo/vector-icons": "^15.0.2",
     "@sentry/react-native": "~7.11.0",
     "@supabase/supabase-js": "^2.112.3",
     "expo": "~57.0.15",

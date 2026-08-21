@@ -169,6 +169,6 @@ const styles = StyleSheet.create({
   checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: colors.border },
   checkboxActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   progress: { fontSize: 13, color: colors.inkMuted },
-  submitButton: { backgroundColor: colors.ink, borderRadius: radii.sm, paddingVertical: 12, alignItems: "center" },
+  submitButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 12, alignItems: "center" },
   submitLabel: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

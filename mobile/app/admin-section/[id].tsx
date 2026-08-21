@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AdminVideoRow } from "../../components/admin/AdminVideoRow";
 import { AdminVideoUploadForm } from "../../components/admin/AdminVideoUploadForm";
 import { getAllVideosForSectionAdmin } from "../../lib/queries";
@@ -27,14 +28,14 @@ export default function AdminSectionDetail() {
 
   if (!videos) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["bottom", "left", "right"]}>
         <ActivityIndicator color={colors.accent} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>{title ?? "Videos"}</Text>
 

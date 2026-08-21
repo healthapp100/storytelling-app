@@ -1,9 +1,12 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { getSections } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
+import { iconForSection } from "../../lib/sectionIcon";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
 import type { Section } from "../../types/database";
 
@@ -29,7 +32,7 @@ export default function Sections() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <FlatList
         data={sections}
         keyExtractor={(item) => item.id}
@@ -40,17 +43,25 @@ export default function Sections() {
             <Text style={styles.heading}>Sections</Text>
           </View>
         }
-        renderItem={({ item, index }) => (
+        ListEmptyComponent={
+          <View style={styles.emptyCard}>
+            <Ionicons name="leaf-outline" size={22} color={colors.inkFaint} />
+            <Text style={styles.emptyText}>No sections yet — the admin hasn't added any.</Text>
+          </View>
+        }
+        renderItem={({ item }) => (
           <Pressy
             style={styles.card}
             onPress={() => router.push({ pathname: "/section/[id]", params: { id: item.id, title: item.title } })}
           >
-            <Text style={styles.cardIndex}>{String(index + 1).padStart(2, "0")}</Text>
+            <View style={styles.cardIconWrap}>
+              <Ionicons name={iconForSection(item.slug)} size={20} color={colors.accentInk} />
+            </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle}>{item.title}</Text>
               {item.description ? <Text style={styles.cardDescription}>{item.description}</Text> : null}
             </View>
-            <Text style={styles.cardArrow}>→</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.accent} />
           </Pressy>
         )}
       />
@@ -81,9 +92,25 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...shadow.card,
   },
-  cardIndex: { fontFamily: fonts.display, fontSize: 20, color: colors.accent, opacity: 0.5 },
+  cardIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   cardBody: { flex: 1, gap: 2 },
   cardTitle: { fontSize: 18, fontWeight: "700", color: colors.ink },
   cardDescription: { fontSize: 14, color: colors.inkMuted },
-  cardArrow: { color: colors.accent, fontSize: 18, fontWeight: "700" },
+  emptyCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  emptyText: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
 });

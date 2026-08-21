@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   deniedTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.ink, textAlign: "center" },
   deniedText: { textAlign: "center", color: colors.inkMuted, fontSize: 15, lineHeight: 21, marginBottom: spacing.sm },
   subscribeButton: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.night,
     borderRadius: radii.md,
     paddingVertical: 13,
     paddingHorizontal: 22,

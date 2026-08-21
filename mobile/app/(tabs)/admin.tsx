@@ -1,9 +1,9 @@
 import { Redirect } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -127,8 +127,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.eyebrow}>Manage</Text>
         <Text style={styles.heading}>Admin</Text>
 
         <View style={styles.block}>
@@ -211,6 +212,14 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
   container: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.accent,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    marginBottom: 4,
+  },
   heading: { fontFamily: fonts.display, fontSize: 30, color: colors.ink },
   block: { gap: spacing.sm },
   blockTitle: { fontSize: 13, fontWeight: "700", color: colors.accent, textTransform: "uppercase", letterSpacing: 1 },
@@ -233,7 +242,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paperRaised,
   },
   multiline: { minHeight: 80, textAlignVertical: "top" },
-  primaryButton: { backgroundColor: colors.ink, borderRadius: radii.sm, paddingVertical: 11, alignItems: "center" },
+  primaryButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 11, alignItems: "center" },
   primaryButtonLabel: { color: "#fff", fontWeight: "700", fontSize: 14 },
   secondaryButton: {
     borderWidth: 1,
@@ -264,6 +273,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink,
   },
-  planSaveButton: { backgroundColor: colors.ink, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 12 },
+  planSaveButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 12 },
   planSaveLabel: { color: "#fff", fontWeight: "700", fontSize: 13 },
 });

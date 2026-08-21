@@ -1,6 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import { Pressy } from "./Pressy";
+import { TextButton } from "./TextButton";
 import type { Credential } from "../lib/auth";
 import { colors, radii, spacing } from "../lib/theme";
 
@@ -47,22 +49,36 @@ export function CredentialForm({ submitLabel, showNameField, onSubmit }: Props) 
   return (
     <View style={styles.container}>
       <View style={styles.methodSwitch}>
-        <Pressable
+        <Pressy
           style={[styles.methodButton, method === "email" && styles.methodButtonActive]}
           onPress={() => setMethod("email")}
+          scaleTo={0.98}
         >
+          <Ionicons
+            name="mail-outline"
+            size={15}
+            color={method === "email" ? colors.accentInk : colors.accentInk}
+            style={{ opacity: method === "email" ? 1 : 0.6 }}
+          />
           <Text style={[styles.methodLabel, method === "email" && styles.methodLabelActive]}>
             Email
           </Text>
-        </Pressable>
-        <Pressable
+        </Pressy>
+        <Pressy
           style={[styles.methodButton, method === "phone" && styles.methodButtonActive]}
           onPress={() => setMethod("phone")}
+          scaleTo={0.98}
         >
+          <Ionicons
+            name="call-outline"
+            size={15}
+            color={colors.accentInk}
+            style={{ opacity: method === "phone" ? 1 : 0.6 }}
+          />
           <Text style={[styles.methodLabel, method === "phone" && styles.methodLabelActive]}>
             Phone
           </Text>
-        </Pressable>
+        </Pressy>
       </View>
 
       {showNameField && (
@@ -108,12 +124,12 @@ export function CredentialForm({ submitLabel, showNameField, onSubmit }: Props) 
             autoComplete="password"
             textContentType="password"
           />
-          <Pressable
-            style={styles.passwordToggle}
+          <TextButton
+            style={styles.passwordToggleLabel}
             onPress={() => setPasswordVisible((visible) => !visible)}
           >
-            <Text style={styles.passwordToggleLabel}>{passwordVisible ? "Hide" : "Show"}</Text>
-          </Pressable>
+            {passwordVisible ? "Hide" : "Show"}
+          </TextButton>
         </View>
       </View>
 
@@ -146,7 +162,15 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     padding: 4,
   },
-  methodButton: { flex: 1, paddingVertical: 10, borderRadius: radii.md - 3, alignItems: "center" },
+  methodButton: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: radii.md - 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   methodButtonActive: {
     backgroundColor: colors.paperRaised,
     shadowColor: colors.ink,
@@ -171,8 +195,13 @@ const styles = StyleSheet.create({
   },
   passwordRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   passwordInput: { flex: 1 },
-  passwordToggle: { paddingHorizontal: 10, paddingVertical: 10 },
-  passwordToggleLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
+  passwordToggleLabel: {
+    color: colors.inkMuted,
+    fontWeight: "600",
+    fontSize: 13,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
   errorBanner: {
     backgroundColor: colors.dangerSoft,
     borderWidth: 1,
@@ -182,7 +211,7 @@ const styles = StyleSheet.create({
   },
   error: { color: colors.danger, fontSize: 14 },
   submitButton: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.night,
     borderRadius: radii.md,
     paddingVertical: 15,
     alignItems: "center",

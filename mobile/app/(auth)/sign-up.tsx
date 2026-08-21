@@ -1,15 +1,17 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  View,
 } from "react-native";
 import { CredentialForm } from "../../components/CredentialForm";
 import { signUp } from "../../lib/auth";
-import { colors, fonts, spacing } from "../../lib/theme";
+import { colors, fonts, radii, spacing } from "../../lib/theme";
 
 export default function SignUp() {
   return (
@@ -22,6 +24,9 @@ export default function SignUp() {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
+          <View style={styles.brandMark}>
+            <Ionicons name="flame" size={22} color={colors.accent} />
+          </View>
           <Text style={styles.eyebrow}>Get started</Text>
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>
@@ -51,6 +56,15 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   flex: { flex: 1 },
   container: { flexGrow: 1, justifyContent: "center", padding: spacing.lg, paddingVertical: spacing.xxl },
+  brandMark: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
   eyebrow: {
     fontSize: 12,
     fontWeight: "700",

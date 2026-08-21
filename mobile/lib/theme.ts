@@ -1,16 +1,25 @@
 // Shared design tokens. Pull colors/spacing/type from here rather than
 // hardcoding — keeps every screen visually consistent.
+//
+// Palette: warm parchment ground + deep indigo "night" surfaces + marigold
+// gold accent — evokes lamp-lit night storytelling and temple gold, deliberately
+// steering away from the cream+terracotta combination that reads as a
+// generic AI-generated palette. `ink` is a TEXT color only; `night` is the
+// dedicated dark-surface background (hero cards, primary buttons) — kept
+// separate so text and background roles never collide when either changes.
 
 export const colors = {
-  paper: "#FBF7F0", // warm off-white ground, not a stark white
+  paper: "#F7F2E7", // warm parchment ground, not stark white
   paperRaised: "#FFFFFF",
-  ink: "#241F18", // near-black with a warm bias, not pure black
-  inkMuted: "#6B6153",
-  inkFaint: "#9C9384",
-  border: "#E7DFD1",
-  accent: "#B5551E", // terracotta/saffron — the one warm accent
-  accentSoft: "#F3E4D6",
-  accentInk: "#5C2A0E",
+  ink: "#231E33", // near-black with an indigo bias — text color only
+  inkMuted: "#655D78",
+  inkFaint: "#9C93AE",
+  border: "#E7DED0",
+  night: "#211B36", // deep indigo — hero cards, primary buttons, nav accents
+  nightRaised: "#2C2447",
+  accent: "#C98A1F", // marigold/temple gold — the one warm accent
+  accentSoft: "#F5E4C2",
+  accentInk: "#7A5511",
   success: "#3F6B4A",
   successSoft: "#E5EFE6",
   danger: "#B23A2E",
@@ -40,10 +49,10 @@ export const fonts = {
 
 export const shadow = {
   card: {
-    shadowColor: "#241F18",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    shadowColor: "#211B36",
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
   },
 } as const;

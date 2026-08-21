@@ -1,6 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { getVideosForSection } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
@@ -47,20 +49,30 @@ export default function SectionDetail() {
             <Text style={styles.heading}>{title ?? "Videos"}</Text>
           </View>
         }
-        ListEmptyComponent={<Text style={styles.empty}>No videos here yet — check back soon.</Text>}
+        ListEmptyComponent={
+          <View style={styles.emptyCard}>
+            <Ionicons name="film-outline" size={22} color={colors.inkFaint} />
+            <Text style={styles.empty}>No videos here yet — check back soon.</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <Pressy
             style={styles.row}
             onPress={() => router.push({ pathname: "/video/[id]", params: { id: item.id } })}
           >
+            <View style={styles.playIconWrap}>
+              <Ionicons name="play" size={16} color={colors.accentInk} />
+            </View>
             <View style={styles.rowText}>
-              <Text style={styles.rowTitle}>{item.title}</Text>
+              <Text style={styles.rowTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
               <Text style={styles.rowMeta}>
                 {formatDuration(item.duration_seconds)}
                 {item.access_tier === "one_time" ? " · Pay per video" : ""}
               </Text>
             </View>
-            <Text style={styles.rowArrow}>→</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.accent} />
           </Pressy>
         )}
       />
@@ -82,7 +94,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heading: { fontFamily: fonts.display, fontSize: 28, color: colors.ink },
-  empty: { color: colors.inkFaint, fontSize: 14, marginTop: spacing.lg },
+  emptyCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  empty: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -92,8 +114,15 @@ const styles = StyleSheet.create({
     padding: spacing.md + 2,
     ...shadow.card,
   },
+  playIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
   rowMeta: { fontSize: 13, color: colors.inkMuted },
-  rowArrow: { color: colors.accent, fontSize: 16, fontWeight: "700" },
 });
