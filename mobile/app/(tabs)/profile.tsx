@@ -4,6 +4,7 @@ import { SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { signOut } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
+import { Sentry } from "../../lib/sentry";
 import { useSession } from "../../lib/session";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
 import type { Profile } from "../../types/database";
@@ -56,6 +57,17 @@ export default function ProfileScreen() {
           >
             <Text style={styles.signOutLabel}>Sign out</Text>
           </Pressy>
+
+          {__DEV__ && (
+            <Pressy
+              style={styles.debugButton}
+              onPress={() => {
+                Sentry.captureException(new Error("Test error from Profile screen"));
+              }}
+            >
+              <Text style={styles.debugLabel}>Send test error to Sentry (dev only)</Text>
+            </Pressy>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -103,4 +115,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paperRaised,
   },
   signOutLabel: { fontWeight: "600", color: colors.ink },
+  debugButton: { alignItems: "center", padding: spacing.sm },
+  debugLabel: { color: colors.inkFaint, fontSize: 12 },
 });

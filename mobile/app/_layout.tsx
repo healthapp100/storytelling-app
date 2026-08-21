@@ -7,10 +7,13 @@ import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import { SessionProvider } from "../lib/session";
 import { colors } from "../lib/theme";
+// Importing this runs Sentry.init as a side effect — must happen before
+// anything else so it can catch errors thrown during startup too.
+import { Sentry } from "../lib/sentry";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded] = useFonts({ Fraunces_600SemiBold, Fraunces_500Medium_Italic });
 
   const onLayoutReady = useCallback(() => {
@@ -62,3 +65,8 @@ export default function RootLayout() {
     </SessionProvider>
   );
 }
+
+// Sentry.wrap adds a top-level error boundary and touch-event/navigation
+// breadcrumbs around the whole app — this is the officially recommended way
+// to mount it, not just calling Sentry.init on its own.
+export default Sentry.wrap(RootLayout);
