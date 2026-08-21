@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
+import { DateTimeField } from "../DateTimeField";
 import { createVideo } from "../../lib/adminActions";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { colors, radii, shadow, spacing } from "../../lib/theme";
@@ -13,7 +14,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [accessTier, setAccessTier] = useState<"subscription" | "one_time">("subscription");
   const [priceCents, setPriceCents] = useState("");
-  const [expiresAt, setExpiresAt] = useState(""); // YYYY-MM-DD HH:mm, kept simple for mobile input
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [isDailyFeatured, setIsDailyFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progressLabel, setProgressLabel] = useState("");
@@ -24,15 +25,11 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !file || !expiresAt.trim()) {
+    if (!title.trim() || !file || !expiresAt) {
       Alert.alert("Missing fields", "Title, a video file, and an expiry date are all required.");
       return;
     }
-    const expiryDate = new Date(expiresAt.trim());
-    if (Number.isNaN(expiryDate.getTime())) {
-      Alert.alert("Invalid expiry date", "Use the format YYYY-MM-DD HH:mm, e.g. 2026-08-25 18:00");
-      return;
-    }
+    const expiryDate = expiresAt;
     const price = accessTier === "one_time" ? Number(priceCents) : null;
     if (accessTier === "one_time" && (!price || price <= 0)) {
       Alert.alert("Missing price", "Pay-per-video content needs a price greater than zero.");
@@ -65,7 +62,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       setDescription("");
       setFile(null);
       setPriceCents("");
-      setExpiresAt("");
+      setExpiresAt(null);
       setIsDailyFeatured(false);
       onUploaded();
     } catch (error) {
@@ -111,12 +108,10 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
         />
       )}
 
-      <Text style={styles.label}>Expiry date (mandatory — video is auto-deleted after this)</Text>
-      <AppTextInput
-        style={styles.input}
-        placeholder="YYYY-MM-DD HH:mm, e.g. 2026-08-25 18:00"
+      <DateTimeField
+        label="Expiry date (mandatory — video is auto-deleted after this)"
         value={expiresAt}
-        onChangeText={setExpiresAt}
+        onChange={setExpiresAt}
       />
 
       <Pressable style={styles.checkboxRow} onPress={() => setIsDailyFeatured((v) => !v)}>
