@@ -33,9 +33,16 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
   return offerings.current;
 }
 
-export async function purchasePackageByIdentifier(packageIdentifier: string): Promise<CustomerInfo> {
+// `storeProductId` here is subscription_plans.revenuecat_product_id — the
+// actual App Store/Play Store product ID (e.g. "app.storytelling.monthly").
+// That's NOT the same as a RevenueCat Package's own `.identifier` (which is
+// an Offering-scoped slug like "$rc_monthly", set inside the RevenueCat
+// dashboard) — matching against `pkg.identifier` would silently never find
+// anything, since our stored value is a store ID, not a package slug. The
+// store product ID lives at `pkg.product.identifier` instead.
+export async function purchasePackageByIdentifier(storeProductId: string): Promise<CustomerInfo> {
   const offering = await getCurrentOffering();
-  const pkg = offering?.availablePackages.find((p) => p.identifier === packageIdentifier);
+  const pkg = offering?.availablePackages.find((p) => p.product.identifier === storeProductId);
   if (!pkg) {
     throw new Error("That plan isn't available for purchase right now.");
   }

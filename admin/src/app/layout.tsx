@@ -22,6 +22,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Storytelling Admin",
   description: "Admin panel for the storytelling app",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

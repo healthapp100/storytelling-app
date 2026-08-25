@@ -16,10 +16,10 @@
    ```bash
    npx supabase secrets set REVENUECAT_WEBHOOK_SECRET=...
    ```
-4. Deploy the functions:
+4. Deploy the functions. `revenuecat-webhook` needs `--no-verify-jwt` — RevenueCat sends its own shared-secret Bearer token, not a Supabase-signed JWT, and without this flag the function gateway rejects every real webhook with 401 before the function's own secret check ever runs (this is also set in `config.toml`, but pass the flag explicitly too since older CLI versions don't always pick that up):
    ```bash
    npx supabase functions deploy expire-videos
-   npx supabase functions deploy revenuecat-webhook
+   npx supabase functions deploy revenuecat-webhook --no-verify-jwt
    npx supabase functions deploy send-daily-notification
    ```
 5. Promote your own account to admin once you've signed up through the app:

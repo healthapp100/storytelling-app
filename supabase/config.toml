@@ -8,3 +8,13 @@ port = 54322
 
 [studio]
 enabled = true
+
+# RevenueCat sends its own shared-secret Bearer token (checked inside the
+# function itself), not a Supabase-signed JWT — with the default
+# verify_jwt = true, Supabase's function gateway would reject every real
+# webhook delivery with 401 before our code ever runs, and subscriptions
+# would silently never sync. expire-videos and send-daily-notification
+# don't need this because pg_cron calls them with the service role key,
+# which *is* a valid Supabase JWT.
+[functions.revenuecat-webhook]
+verify_jwt = false
