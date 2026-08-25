@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { uploadFileToStorage } from "../lib/storage-upload";
+import { storagePublicUrl, uploadFileToStorage } from "../lib/storage-upload";
 import { createVideo } from "../app/(admin)/sections/[id]/actions";
 
 type Stage = "idle" | "requesting-url" | "uploading" | "saving" | "done";
@@ -33,8 +33,16 @@ export function VideoUploadForm({ sectionId }: { sectionId: string }) {
       setStage("uploading");
       const { storageKey } = await uploadFileToStorage(file, setProgress);
 
-      setStage("saving");
       const formData = new FormData(form);
+
+      const thumbnailInput = form.elements.namedItem("thumbnail") as HTMLInputElement;
+      const thumbnailFile = thumbnailInput?.files?.[0];
+      if (thumbnailFile) {
+        const { storageKey: thumbnailKey } = await uploadFileToStorage(thumbnailFile, undefined, "images");
+        formData.set("thumbnail_url", storagePublicUrl(thumbnailKey));
+      }
+
+      setStage("saving");
       formData.set("storage_key", storageKey);
       await createVideo(sectionId, formData);
 
@@ -73,6 +81,15 @@ export function VideoUploadForm({ sectionId }: { sectionId: string }) {
         placeholder="Duration in seconds (optional)"
         className={inputClass}
       />
+      <label className="block text-sm text-ink-muted">
+        Thumbnail image (optional)
+        <input
+          name="thumbnail"
+          type="file"
+          accept="image/*"
+          className="mt-1 block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-accent-ink"
+        />
+      </label>
 
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm text-ink-muted">

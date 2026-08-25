@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getSections } from "../../lib/queries";
@@ -68,7 +68,11 @@ export default function Sections() {
             onPress={() => router.push({ pathname: "/section/[id]", params: { id: item.id, title: item.title } })}
           >
             <View style={styles.cardIconWrap}>
-              <Ionicons name={iconForSection(item.slug)} size={20} color={colors.accentInk} />
+              {item.icon_url ? (
+                <Image source={{ uri: item.icon_url }} style={styles.cardIconImage} />
+              ) : (
+                <Ionicons name={iconForSection(item.slug)} size={20} color={colors.accentInk} />
+              )}
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle}>{item.title}</Text>
@@ -112,7 +116,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  cardIconImage: { width: 44, height: 44 },
   cardBody: { flex: 1, gap: 2 },
   cardTitle: { fontSize: 18, fontWeight: "700", color: colors.ink },
   cardDescription: { fontSize: 14, color: colors.inkMuted },

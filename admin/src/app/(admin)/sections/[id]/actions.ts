@@ -18,6 +18,7 @@ export async function createVideo(sectionId: string, formData: FormData) {
     | "subscription"
     | "one_time";
   const priceRupees = accessTier === "one_time" ? Number(formData.get("price_rupees") ?? 0) : null;
+  const thumbnailUrl = String(formData.get("thumbnail_url") ?? "").trim() || null;
 
   if (!title || !storageKey || !expiresAt) {
     throw new Error("Title, an uploaded file, and an expiry date are all required.");
@@ -44,6 +45,7 @@ export async function createVideo(sectionId: string, formData: FormData) {
       is_daily_featured: isDailyFeatured,
       access_tier: accessTier,
       price_rupees: priceRupees,
+      thumbnail_url: thumbnailUrl,
       status: "live",
       created_by: userId,
     })
@@ -67,6 +69,7 @@ export async function updateVideo(sectionId: string, videoId: string, formData: 
     | "subscription"
     | "one_time";
   const priceRupees = accessTier === "one_time" ? Number(formData.get("price_rupees") ?? 0) : null;
+  const thumbnailUrl = String(formData.get("thumbnail_url") ?? "").trim() || null;
 
   if (!title || !expiresAt) {
     throw new Error("Title and an expiry date are required.");
@@ -86,6 +89,7 @@ export async function updateVideo(sectionId: string, videoId: string, formData: 
       expires_at: new Date(expiresAt).toISOString(),
       access_tier: accessTier,
       price_rupees: priceRupees,
+      thumbnail_url: thumbnailUrl,
     })
     .eq("id", videoId);
   if (error) throw new Error(error.message);

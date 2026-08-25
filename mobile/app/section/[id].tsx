@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getVideosForSection } from "../../lib/queries";
@@ -73,9 +73,13 @@ export default function SectionDetail() {
             style={styles.row}
             onPress={() => router.push({ pathname: "/video/[id]", params: { id: item.id } })}
           >
-            <View style={styles.playIconWrap}>
-              <Ionicons name="play" size={16} color={colors.accentInk} />
-            </View>
+            {item.thumbnail_url ? (
+              <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailWrap} />
+            ) : (
+              <View style={styles.playIconWrap}>
+                <Ionicons name="play" size={16} color={colors.accentInk} />
+              </View>
+            )}
             <View style={styles.rowText}>
               <Text style={styles.rowTitle} numberOfLines={2}>
                 {item.title}
@@ -135,6 +139,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  thumbnailWrap: { width: 56, height: 56, borderRadius: radii.md, backgroundColor: colors.accentSoft },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
   rowMeta: { fontSize: 13, color: colors.inkMuted },

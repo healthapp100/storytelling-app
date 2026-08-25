@@ -19,11 +19,12 @@ export async function createSection(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
   const displayOrder = Number(formData.get("display_order") ?? 0);
+  const iconUrl = String(formData.get("icon_url") ?? "").trim() || null;
   if (!title) throw new Error("Title is required");
 
   const { data, error } = await supabase
     .from("sections")
-    .insert({ title, slug: slugify(title), description, display_order: displayOrder })
+    .insert({ title, slug: slugify(title), description, display_order: displayOrder, icon_url: iconUrl })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -39,11 +40,18 @@ export async function updateSection(sectionId: string, formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
   const displayOrder = Number(formData.get("display_order") ?? 0);
+  const iconUrl = String(formData.get("icon_url") ?? "").trim() || null;
   if (!title) throw new Error("Title is required");
 
   const { error } = await supabase
     .from("sections")
-    .update({ title, description, display_order: displayOrder, updated_at: new Date().toISOString() })
+    .update({
+      title,
+      description,
+      display_order: displayOrder,
+      icon_url: iconUrl,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", sectionId);
   if (error) throw new Error(error.message);
 

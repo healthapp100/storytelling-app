@@ -15,7 +15,7 @@ import { AppTextInput } from "../../components/AppTextInput";
 import { ErrorState } from "../../components/ErrorState";
 import { AdminSectionRow } from "../../components/admin/AdminSectionRow";
 import { createSection, updatePlan, upsertAppContent } from "../../lib/adminActions";
-import { getAppContent, getAllSubscriptionPlans, getSections } from "../../lib/queries";
+import { getAppContent, getAllSubscriptionPlans, getSections, storagePublicUrl } from "../../lib/queries";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import * as DocumentPicker from "expo-document-picker";
 import { useSession } from "../../lib/session";
@@ -40,6 +40,7 @@ export default function AdminDashboard() {
 
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newIcon, setNewIcon] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [creatingSection, setCreatingSection] = useState(false);
 
   const load = useCallback(async () => {
@@ -66,13 +67,34 @@ export default function AdminDashboard() {
     load();
   }, [load]);
 
+  const handlePickNewIcon = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "image/*" });
+    if (!result.canceled && result.assets?.[0]) setNewIcon(result.assets[0]);
+  };
+
   const handleCreateSection = async () => {
     if (!newTitle.trim()) return;
     setCreatingSection(true);
     try {
-      await createSection({ title: newTitle.trim(), description: newDescription.trim() || null, displayOrder: sections.length });
+      let iconUrl: string | null = null;
+      if (newIcon) {
+        const { storageKey } = await uploadLocalFileToStorage(
+          newIcon.uri,
+          newIcon.name ?? "icon.jpg",
+          newIcon.mimeType ?? "image/jpeg",
+          "images"
+        );
+        iconUrl = storagePublicUrl(storageKey);
+      }
+      await createSection({
+        title: newTitle.trim(),
+        description: newDescription.trim() || null,
+        displayOrder: sections.length,
+        iconUrl,
+      });
       setNewTitle("");
       setNewDescription("");
+      setNewIcon(null);
       await load();
     } catch (error) {
       Alert.alert("Couldn't create section", error instanceof Error ? error.message : "Try again.");
@@ -164,6 +186,11 @@ export default function AdminDashboard() {
               value={newDescription}
               onChangeText={setNewDescription}
             />
+            <Pressy style={styles.secondaryButton} onPress={handlePickNewIcon}>
+              <Text style={styles.secondaryButtonLabel}>
+                {newIcon ? newIcon.name : "Choose an icon image (optional)"}
+              </Text>
+            </Pressy>
             <Pressy style={styles.primaryButton} onPress={handleCreateSection} disabled={creatingSection}>
               <Text style={styles.primaryButtonLabel}>{creatingSection ? "Adding…" : "Add section"}</Text>
             </Pressy>

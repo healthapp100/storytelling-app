@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/server";
 import type { Section } from "../../../types/database";
-import { createSection, deleteSection } from "./actions";
+import { deleteSection } from "./actions";
 import { ConfirmSubmitButton } from "../../../components/ConfirmSubmitButton";
+import { CreateSectionForm } from "../../../components/CreateSectionForm";
 import { EditSectionForm } from "../../../components/EditSectionForm";
 
 export default async function SectionsPage() {
@@ -28,11 +29,17 @@ export default async function SectionsPage() {
         {(sections ?? []).map((section) => (
           <li key={section.id} className="p-4 transition-colors hover:bg-paper">
             <div className="flex items-center justify-between gap-4">
-              <Link href={`/sections/${section.id}`} className="flex-1">
-                <p className="font-medium text-ink">{section.title}</p>
-                {section.description && (
-                  <p className="text-sm text-ink-muted">{section.description}</p>
+              <Link href={`/sections/${section.id}`} className="flex flex-1 items-center gap-3">
+                {section.icon_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={section.icon_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
                 )}
+                <div>
+                  <p className="font-medium text-ink">{section.title}</p>
+                  {section.description && (
+                    <p className="text-sm text-ink-muted">{section.description}</p>
+                  )}
+                </div>
               </Link>
               <div className="flex shrink-0 items-center gap-4">
                 <EditSectionForm section={section} />
@@ -53,36 +60,7 @@ export default async function SectionsPage() {
         )}
       </ul>
 
-      <form
-        action={createSection}
-        className="space-y-3 rounded-xl border border-border bg-paper-raised p-5"
-      >
-        <h2 className="font-display text-lg text-ink">Add a section</h2>
-        <input
-          name="title"
-          placeholder="Title (e.g. Sutras)"
-          required
-          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none"
-        />
-        <input
-          name="description"
-          placeholder="Description (optional)"
-          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none"
-        />
-        <input
-          name="display_order"
-          type="number"
-          defaultValue={0}
-          placeholder="Display order"
-          className="w-36 rounded-lg border border-border px-3 py-2.5 text-sm text-ink transition-colors focus:border-accent focus:outline-none"
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
-        >
-          Add section
-        </button>
-      </form>
+      <CreateSectionForm />
     </div>
   );
 }

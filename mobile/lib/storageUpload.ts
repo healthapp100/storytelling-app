@@ -13,13 +13,14 @@ const BUCKET = "videos";
 export async function uploadLocalFileToStorage(
   localUri: string,
   fileName: string,
-  contentType: string
+  contentType: string,
+  folder: string = "videos"
 ): Promise<{ storageKey: string }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) throw new Error("Not signed in.");
 
-  const storageKey = `videos/${Date.now()}-${fileName}`;
+  const storageKey = `${folder}/${Date.now()}-${fileName}`;
   const uploadUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/${BUCKET}/${storageKey}`;
 
   const result = await FileSystem.uploadAsync(uploadUrl, localUri, {

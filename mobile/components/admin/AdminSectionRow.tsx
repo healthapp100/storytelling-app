@@ -1,11 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
 import { deleteSection, updateSection } from "../../lib/adminActions";
+import { storagePublicUrl } from "../../lib/queries";
+import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { useToast } from "../../lib/toast";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Section } from "../../types/database";
@@ -14,18 +17,36 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(section.title);
   const [description, setDescription] = useState(section.description ?? "");
+  const [icon, setIcon] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
   const { showToast } = useToast();
+
+  const pickIcon = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "image/*" });
+    if (!result.canceled && result.assets?.[0]) setIcon(result.assets[0]);
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      let iconUrl = section.icon_url;
+      if (icon) {
+        const { storageKey } = await uploadLocalFileToStorage(
+          icon.uri,
+          icon.name ?? "icon.jpg",
+          icon.mimeType ?? "image/jpeg",
+          "images"
+        );
+        iconUrl = storagePublicUrl(storageKey);
+      }
       await updateSection(section.id, {
         title: title.trim(),
         description: description.trim() || null,
         displayOrder: section.display_order,
+        iconUrl,
       });
       setEditing(false);
+      setIcon(null);
       showToast("Section updated.", "success");
       onChanged();
     } catch (error) {
@@ -68,6 +89,15 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
           onChangeText={setDescription}
           placeholder="Description"
         />
+        <Pressy style={styles.iconPicker} onPress={pickIcon}>
+          {icon ? (
+            <Image source={{ uri: icon.uri }} style={styles.iconPreview} />
+          ) : section.icon_url ? (
+            <Image source={{ uri: section.icon_url }} style={styles.iconPreview} />
+          ) : (
+            <Text style={styles.iconPickerLabel}>Choose an icon image (optional)</Text>
+          )}
+        </Pressy>
         <View style={styles.row}>
           <Pressy style={styles.saveButton} onPress={handleSave} disabled={saving}>
             <Text style={styles.saveLabel}>{saving ? "Saving…" : "Save"}</Text>
@@ -97,7 +127,11 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
           ) : null}
         </View>
         <View style={styles.manageIconWrap}>
-          <Ionicons name="videocam-outline" size={16} color={colors.accentInk} />
+          {section.icon_url ? (
+            <Image source={{ uri: section.icon_url }} style={styles.manageIconImage} />
+          ) : (
+            <Ionicons name="videocam-outline" size={16} color={colors.accentInk} />
+          )}
         </View>
       </Pressy>
       <View style={styles.row}>
@@ -132,7 +166,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  manageIconImage: { width: 32, height: 32 },
+  iconPicker: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  iconPickerLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
+  iconPreview: { width: "100%", height: 90, borderRadius: radii.sm },
   row: { flexDirection: "row", gap: spacing.lg },
   editLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
   deleteLabel: { color: colors.danger, fontWeight: "600", fontSize: 13 },

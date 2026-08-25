@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -87,18 +88,25 @@ export default function Home() {
 
         {todaysVideo ? (
           <Pressy
-            style={styles.todayCard}
+            style={styles.todayCardWrap}
             onPress={() => router.push({ pathname: "/video/[id]", params: { id: todaysVideo.id } })}
           >
-            <View style={styles.todayLabelRow}>
-              <Ionicons name="sparkles" size={13} color={colors.accentSoft} />
-              <Text style={styles.todayLabel}>Today&apos;s story</Text>
-            </View>
-            <Text style={styles.todayTitle}>{todaysVideo.title}</Text>
-            <View style={styles.todayCtaRow}>
-              <Text style={styles.todayCta}>Watch now</Text>
-              <Ionicons name="arrow-forward" size={16} color={colors.accent} />
-            </View>
+            <ImageBackground
+              source={todaysVideo.thumbnail_url ? { uri: todaysVideo.thumbnail_url } : undefined}
+              style={styles.todayCard}
+              imageStyle={styles.todayCardImage}
+            >
+              {todaysVideo.thumbnail_url && <View style={styles.todayCardScrim} />}
+              <View style={styles.todayLabelRow}>
+                <Ionicons name="sparkles" size={13} color={colors.accentSoft} />
+                <Text style={styles.todayLabel}>Today&apos;s story</Text>
+              </View>
+              <Text style={styles.todayTitle}>{todaysVideo.title}</Text>
+              <View style={styles.todayCtaRow}>
+                <Text style={styles.todayCta}>Watch now</Text>
+                <Ionicons name="arrow-forward" size={16} color={colors.accent} />
+              </View>
+            </ImageBackground>
           </Pressy>
         ) : (
           <View style={styles.emptyCard}>
@@ -142,12 +150,22 @@ const styles = StyleSheet.create({
   },
   heading: { fontFamily: fonts.display, fontSize: 34, color: colors.ink },
   intro: { fontSize: 15.5, color: colors.inkMuted, lineHeight: 23 },
+  todayCardWrap: { borderRadius: radii.lg, ...shadow.card },
   todayCard: {
     backgroundColor: colors.night,
     borderRadius: radii.lg,
     padding: spacing.lg,
     gap: spacing.xs,
-    ...shadow.card,
+    overflow: "hidden",
+  },
+  todayCardImage: { borderRadius: radii.lg },
+  todayCardScrim: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(33, 27, 54, 0.72)",
   },
   todayLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   todayLabel: { color: colors.accentSoft, fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: "700" },

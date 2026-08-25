@@ -8,14 +8,15 @@ const BUCKET = "videos";
 // presigned-URL round trip needed, unlike the R2 setup this replaced.
 export async function uploadFileToStorage(
   file: File,
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
+  folder: string = "videos"
 ): Promise<{ storageKey: string }> {
   const supabase = createClient();
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) throw new Error("Not signed in.");
 
-  const storageKey = `videos/${Date.now()}-${file.name}`;
+  const storageKey = `${folder}/${Date.now()}-${file.name}`;
   const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/${BUCKET}/${storageKey}`;
 
   await new Promise<void>((resolve, reject) => {
@@ -38,4 +39,8 @@ export async function uploadFileToStorage(
   });
 
   return { storageKey };
+}
+
+export function storagePublicUrl(storageKey: string): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storageKey}`;
 }

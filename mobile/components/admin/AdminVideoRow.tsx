@@ -1,9 +1,12 @@
+import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
 import { deleteVideo, expireVideoNow, setDailyFeatured, updateVideo } from "../../lib/adminActions";
+import { storagePublicUrl } from "../../lib/queries";
+import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { useToast } from "../../lib/toast";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
@@ -23,14 +26,30 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description ?? "");
+  const [thumbnail, setThumbnail] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
   const { showToast } = useToast();
 
   const statusStyle = STATUS_STYLES[video.status];
 
+  const pickThumbnail = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "image/*" });
+    if (!result.canceled && result.assets?.[0]) setThumbnail(result.assets[0]);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      let thumbnailUrl = video.thumbnail_url;
+      if (thumbnail) {
+        const { storageKey } = await uploadLocalFileToStorage(
+          thumbnail.uri,
+          thumbnail.name ?? "thumbnail.jpg",
+          thumbnail.mimeType ?? "image/jpeg",
+          "images"
+        );
+        thumbnailUrl = storagePublicUrl(storageKey);
+      }
       await updateVideo(video.id, {
         title: title.trim(),
         description: description.trim() || null,
@@ -38,8 +57,10 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
         expiresAt: video.expires_at,
         accessTier: video.access_tier,
         priceRupees: video.price_rupees,
+        thumbnailUrl,
       });
       setEditing(false);
+      setThumbnail(null);
       showToast("Video updated.", "success");
       onChanged();
     } catch (error) {
@@ -103,6 +124,7 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
 
   return (
     <View style={styles.card}>
+      {video.thumbnail_url && <Image source={{ uri: video.thumbnail_url }} style={styles.rowThumbnail} />}
       <View style={styles.headerRow}>
         <Text style={styles.title} numberOfLines={2}>
           {video.title}
@@ -130,6 +152,15 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
             onChangeText={setDescription}
             placeholder="Description"
           />
+          <Pressy style={styles.thumbnailPicker} onPress={pickThumbnail}>
+            {thumbnail ? (
+              <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} />
+            ) : video.thumbnail_url ? (
+              <Image source={{ uri: video.thumbnail_url }} style={styles.thumbnailPreview} />
+            ) : (
+              <Text style={styles.thumbnailPickerLabel}>Choose a thumbnail image (optional)</Text>
+            )}
+          </Pressy>
           <View style={styles.row}>
             <Pressy style={styles.saveButton} onPress={handleSave} disabled={saving}>
               <Text style={styles.saveLabel}>{saving ? "Saving…" : "Save"}</Text>
@@ -176,6 +207,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  rowThumbnail: { width: "100%", height: 140, borderRadius: radii.sm, marginBottom: spacing.xs },
   headerRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs, flexWrap: "wrap" },
   title: { fontSize: 15, fontWeight: "700", color: colors.ink, flexShrink: 1 },
   badge: { borderRadius: radii.pill, paddingHorizontal: 8, paddingVertical: 2 },
@@ -198,4 +230,15 @@ const styles = StyleSheet.create({
   saveButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 14 },
   saveLabel: { color: "#fff", fontWeight: "700", fontSize: 13 },
   cancelLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13, alignSelf: "center" },
+  thumbnailPicker: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  thumbnailPickerLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
+  thumbnailPreview: { width: "100%", height: 100, borderRadius: radii.sm },
 });

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Video } from "../types/database";
 import { updateVideo } from "../app/(admin)/sections/[id]/actions";
+import { storagePublicUrl, uploadFileToStorage } from "../lib/storage-upload";
 
 const inputClass =
   "w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink transition-colors focus:border-accent focus:outline-none";
@@ -16,6 +17,8 @@ function toDateTimeLocal(iso: string): string {
 export function EditVideoForm({ sectionId, video }: { sectionId: string; video: Video }) {
   const [open, setOpen] = useState(false);
   const [accessTier, setAccessTier] = useState<"subscription" | "one_time">(video.access_tier);
+  const [saving, setSaving] = useState(false);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div>
@@ -30,8 +33,20 @@ export function EditVideoForm({ sectionId, video }: { sectionId: string; video: 
       {open && (
         <form
           action={async (formData) => {
-            await updateVideo(sectionId, video.id, formData);
-            setOpen(false);
+            setSaving(true);
+            try {
+              const thumbnailFile = thumbnailInputRef.current?.files?.[0];
+              if (thumbnailFile) {
+                const { storageKey } = await uploadFileToStorage(thumbnailFile, undefined, "images");
+                formData.set("thumbnail_url", storagePublicUrl(storageKey));
+              } else if (video.thumbnail_url) {
+                formData.set("thumbnail_url", video.thumbnail_url);
+              }
+              await updateVideo(sectionId, video.id, formData);
+              setOpen(false);
+            } finally {
+              setSaving(false);
+            }
           }}
           className="mt-3 space-y-2 rounded-lg border border-border bg-paper p-3"
         >
@@ -50,6 +65,16 @@ export function EditVideoForm({ sectionId, video }: { sectionId: string; video: 
             className={inputClass}
             placeholder="Duration in seconds"
           />
+          <label className="block text-sm text-ink-muted">
+            Thumbnail image (optional — leave blank to keep the current one)
+            <input
+              ref={thumbnailInputRef}
+              name="thumbnail"
+              type="file"
+              accept="image/*"
+              className="mt-1 block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-accent-ink"
+            />
+          </label>
 
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm text-ink-muted">
@@ -99,9 +124,10 @@ export function EditVideoForm({ sectionId, video }: { sectionId: string; video: 
 
           <button
             type="submit"
-            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+            disabled={saving}
+            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-ink disabled:opacity-60"
           >
-            Save
+            {saving ? "Saving…" : "Save"}
           </button>
         </form>
       )}

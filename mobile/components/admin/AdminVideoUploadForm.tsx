@@ -1,11 +1,12 @@
 import * as DocumentPicker from "expo-document-picker";
 import { createVideoPlayer } from "expo-video";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { DateTimeField } from "../DateTimeField";
 import { createVideo } from "../../lib/adminActions";
+import { storagePublicUrl } from "../../lib/queries";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { useToast } from "../../lib/toast";
 import { colors, radii, shadow, spacing } from "../../lib/theme";
@@ -35,6 +36,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [thumbnail, setThumbnail] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [accessTier, setAccessTier] = useState<"subscription" | "one_time">("subscription");
   const [priceRupees, setPriceCents] = useState("");
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
@@ -46,6 +48,11 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   const pickFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "video/*" });
     if (!result.canceled && result.assets?.[0]) setFile(result.assets[0]);
+  };
+
+  const pickThumbnail = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: "image/*" });
+    if (!result.canceled && result.assets?.[0]) setThumbnail(result.assets[0]);
   };
 
   const handleSubmit = async () => {
@@ -72,6 +79,18 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
         file.mimeType ?? "video/mp4"
       );
 
+      let thumbnailUrl: string | null = null;
+      if (thumbnail) {
+        setProgressLabel("Uploading thumbnail…");
+        const { storageKey: thumbnailKey } = await uploadLocalFileToStorage(
+          thumbnail.uri,
+          thumbnail.name ?? "thumbnail.jpg",
+          thumbnail.mimeType ?? "image/jpeg",
+          "images"
+        );
+        thumbnailUrl = storagePublicUrl(thumbnailKey);
+      }
+
       setProgressLabel("Saving details…");
       await createVideo({
         sectionId,
@@ -83,11 +102,13 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
         isDailyFeatured,
         accessTier,
         priceRupees: price,
+        thumbnailUrl,
       });
 
       setTitle("");
       setDescription("");
       setFile(null);
+      setThumbnail(null);
       setPriceCents("");
       setExpiresAt(null);
       setIsDailyFeatured(false);
@@ -114,6 +135,14 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
 
       <Pressable style={styles.filePicker} onPress={pickFile}>
         <Text style={styles.filePickerLabel}>{file ? file.name : "Choose a video file"}</Text>
+      </Pressable>
+
+      <Pressable style={styles.thumbnailPicker} onPress={pickThumbnail}>
+        {thumbnail ? (
+          <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} />
+        ) : (
+          <Text style={styles.thumbnailPickerLabel}>Choose a thumbnail image (optional)</Text>
+        )}
       </Pressable>
 
       <View style={styles.row}>
@@ -184,6 +213,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
   },
   filePickerLabel: { color: colors.accentInk, fontWeight: "600", fontSize: 14 },
+  thumbnailPicker: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  thumbnailPickerLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
+  thumbnailPreview: { width: "100%", height: 120, borderRadius: radii.sm },
   row: { flexDirection: "row", gap: spacing.lg },
   radioRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   radioDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, borderColor: colors.border },

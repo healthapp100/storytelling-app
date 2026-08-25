@@ -17,7 +17,12 @@ async function logActivity(action: string, targetTable: string, targetId: string
     .insert({ admin_id: data.user.id, action, target_table: targetTable, target_id: targetId });
 }
 
-export async function createSection(input: { title: string; description: string | null; displayOrder: number }) {
+export async function createSection(input: {
+  title: string;
+  description: string | null;
+  displayOrder: number;
+  iconUrl?: string | null;
+}) {
   const { data, error } = await supabase
     .from("sections")
     .insert({
@@ -25,6 +30,7 @@ export async function createSection(input: { title: string; description: string 
       slug: slugify(input.title),
       description: input.description,
       display_order: input.displayOrder,
+      icon_url: input.iconUrl ?? null,
     })
     .select("id")
     .single();
@@ -34,7 +40,7 @@ export async function createSection(input: { title: string; description: string 
 
 export async function updateSection(
   sectionId: string,
-  input: { title: string; description: string | null; displayOrder: number }
+  input: { title: string; description: string | null; displayOrder: number; iconUrl?: string | null }
 ) {
   const { error } = await supabase
     .from("sections")
@@ -42,6 +48,7 @@ export async function updateSection(
       title: input.title,
       description: input.description,
       display_order: input.displayOrder,
+      icon_url: input.iconUrl ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", sectionId);
@@ -126,6 +133,7 @@ export type CreateVideoInput = {
   isDailyFeatured: boolean;
   accessTier: AccessTier;
   priceRupees: number | null;
+  thumbnailUrl?: string | null;
 };
 
 export async function createVideo(input: CreateVideoInput) {
@@ -147,6 +155,7 @@ export async function createVideo(input: CreateVideoInput) {
       is_daily_featured: input.isDailyFeatured,
       access_tier: input.accessTier,
       price_rupees: input.priceRupees,
+      thumbnail_url: input.thumbnailUrl ?? null,
       status: "live",
       created_by: userData.user?.id ?? null,
     })
@@ -163,6 +172,7 @@ export type UpdateVideoInput = {
   expiresAt: string;
   accessTier: AccessTier;
   priceRupees: number | null;
+  thumbnailUrl?: string | null;
 };
 
 export async function updateVideo(videoId: string, input: UpdateVideoInput) {
@@ -175,6 +185,7 @@ export async function updateVideo(videoId: string, input: UpdateVideoInput) {
       expires_at: input.expiresAt,
       access_tier: input.accessTier,
       price_rupees: input.priceRupees,
+      thumbnail_url: input.thumbnailUrl ?? null,
     })
     .eq("id", videoId);
   if (error) throw new Error(error.message);
