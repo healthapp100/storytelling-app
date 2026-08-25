@@ -87,8 +87,18 @@ export type VideoPurchase = {
   user_id: string;
   video_id: string;
   purchased_at: string;
-  price_paid_cents: number;
+  price_paid_rupees: number;
   store_transaction_id: string | null;
+};
+
+// A pay-per-video video's price_rupees must match one of these tiers to be
+// purchasable — real store IAP needs a fixed product per price point, not
+// a dynamic price per video. Mirrors subscription_plans.
+export type VideoPurchaseTier = {
+  id: string;
+  price_rupees: number;
+  revenuecat_product_id: string | null;
+  active: boolean;
 };
 
 export type AppContent = {

@@ -15,13 +15,19 @@ import { Pressy } from "../../components/Pressy";
 import { AppTextInput } from "../../components/AppTextInput";
 import { ErrorState } from "../../components/ErrorState";
 import { AdminSectionRow } from "../../components/admin/AdminSectionRow";
-import { createSection, updatePlan, upsertAppContent } from "../../lib/adminActions";
-import { getAppContent, getAllSubscriptionPlans, getSections, storagePublicUrl } from "../../lib/queries";
+import { createSection, updatePlan, updateVideoPurchaseTier, upsertAppContent } from "../../lib/adminActions";
+import {
+  getAppContent,
+  getAllSubscriptionPlans,
+  getAllVideoPurchaseTiers,
+  getSections,
+  storagePublicUrl,
+} from "../../lib/queries";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import * as DocumentPicker from "expo-document-picker";
 import { useSession } from "../../lib/session";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
-import type { Section, SubscriptionPlan } from "../../types/database";
+import type { Section, SubscriptionPlan, VideoPurchaseTier } from "../../types/database";
 
 const PLAN_LABELS: Record<SubscriptionPlan["code"], string> = {
   daily: "Daily",
@@ -36,6 +42,7 @@ export default function AdminDashboard() {
   const [failed, setFailed] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [tiers, setTiers] = useState<VideoPurchaseTier[]>([]);
   const [introText, setIntroText] = useState("");
   const [introVideoKey, setIntroVideoKey] = useState<string | null>(null);
   const [introUploading, setIntroUploading] = useState(false);
@@ -48,14 +55,16 @@ export default function AdminDashboard() {
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      const [sectionRows, planRows, introTextRow, introVideoRow] = await Promise.all([
+      const [sectionRows, planRows, tierRows, introTextRow, introVideoRow] = await Promise.all([
         getSections(),
         getAllSubscriptionPlans(),
+        getAllVideoPurchaseTiers(),
         getAppContent("home_intro_text"),
         getAppContent("home_intro_video_key"),
       ]);
       setSections(sectionRows);
       setPlans(planRows);
+      setTiers(tierRows);
       setIntroText((introTextRow?.value as string) ?? "");
       setIntroVideoKey((introVideoRow?.value as string) ?? null);
     } catch {
@@ -153,6 +162,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveTier = async (tier: VideoPurchaseTier, revenuecatProductId: string) => {
+    try {
+      await updateVideoPurchaseTier(tier.id, {
+        revenuecatProductId: revenuecatProductId.trim() || null,
+        active: tier.active,
+      });
+      Alert.alert("Saved");
+    } catch (error) {
+      Alert.alert("Couldn't save", error instanceof Error ? error.message : "Try again.");
+    }
+  };
+
   if (!sessionLoading && !isAdmin) {
     return <Redirect href="/(tabs)" />;
   }
@@ -218,6 +239,19 @@ export default function AdminDashboard() {
         </View>
 
         <View style={styles.block}>
+          <Text style={styles.blockTitle}>Pay-per-video tiers</Text>
+          <Text style={styles.blockHint}>
+            A video&apos;s price must match one of these — set up a matching consumable product in
+            App Store Connect / Play Console and RevenueCat, then paste its product ID here.
+          </Text>
+          <View style={styles.list}>
+            {tiers.map((tier) => (
+              <TierRow key={tier.id} tier={tier} onSave={(productId) => handleSaveTier(tier, productId)} />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.block}>
           <Text style={styles.blockTitle}>Home content</Text>
           <View style={styles.addCard}>
             <AppTextInput
@@ -272,6 +306,30 @@ function PlanRow({ plan, onSave }: { plan: SubscriptionPlan; onSave: (priceRupee
   );
 }
 
+function TierRow({ tier, onSave }: { tier: VideoPurchaseTier; onSave: (revenuecatProductId: string) => void }) {
+  const [value, setValue] = useState(tier.revenuecat_product_id ?? "");
+
+  useEffect(() => {
+    setValue(tier.revenuecat_product_id ?? "");
+  }, [tier.revenuecat_product_id]);
+
+  return (
+    <View style={styles.tierRow}>
+      <Text style={styles.tierPrice}>₹{tier.price_rupees}</Text>
+      <AppTextInput
+        style={styles.tierInput}
+        value={value}
+        onChangeText={setValue}
+        placeholder="RevenueCat product ID"
+        autoCapitalize="none"
+      />
+      <Pressy style={styles.planSaveButton} onPress={() => onSave(value)}>
+        <Text style={styles.planSaveLabel}>Save</Text>
+      </Pressy>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
@@ -287,6 +345,7 @@ const styles = StyleSheet.create({
   heading: { fontFamily: fonts.display, fontSize: 30, color: colors.ink },
   block: { gap: spacing.sm },
   blockTitle: { fontSize: 13, fontWeight: "700", color: colors.accent, textTransform: "uppercase", letterSpacing: 1 },
+  blockHint: { fontSize: 12.5, color: colors.inkMuted, lineHeight: 18 },
   list: { gap: spacing.sm },
   addCard: {
     backgroundColor: colors.paperRaised,
@@ -339,4 +398,24 @@ const styles = StyleSheet.create({
   },
   planSaveButton: { backgroundColor: colors.night, borderRadius: radii.sm, paddingVertical: 8, paddingHorizontal: 12 },
   planSaveLabel: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  tierRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.paperRaised,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    ...shadow.card,
+  },
+  tierPrice: { width: 56, fontWeight: "700", color: colors.ink },
+  tierInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: colors.ink,
+  },
 });

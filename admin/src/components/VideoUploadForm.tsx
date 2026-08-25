@@ -3,13 +3,14 @@
 import { useRef, useState } from "react";
 import { storagePublicUrl, uploadFileToStorage } from "../lib/storage-upload";
 import { createVideo } from "../app/(admin)/sections/[id]/actions";
+import type { VideoPurchaseTier } from "../types/database";
 
 type Stage = "idle" | "requesting-url" | "uploading" | "saving" | "done";
 
 const inputClass =
   "w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none";
 
-export function VideoUploadForm({ sectionId }: { sectionId: string }) {
+export function VideoUploadForm({ sectionId, tiers }: { sectionId: string; tiers: VideoPurchaseTier[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState(0);
@@ -116,7 +117,24 @@ export function VideoUploadForm({ sectionId }: { sectionId: string }) {
         </label>
       </div>
       {accessTier === "one_time" && (
-        <input name="price_rupees" type="number" placeholder="Price in rupees, e.g. 199" required className={inputClass} />
+        <label className="block text-sm text-ink-muted">
+          Price tier
+          <select name="price_rupees" required defaultValue="" className={`mt-1 ${inputClass}`}>
+            <option value="" disabled>
+              Choose a price
+            </option>
+            {tiers.map((tier) => (
+              <option key={tier.id} value={tier.price_rupees}>
+                ₹{tier.price_rupees}
+              </option>
+            ))}
+          </select>
+          {tiers.length === 0 && (
+            <span className="mt-1 block text-xs text-danger">
+              No price tiers set up yet — add one on the Pricing page first.
+            </span>
+          )}
+        </label>
       )}
 
       <label className="block text-sm text-ink-muted">

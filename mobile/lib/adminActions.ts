@@ -228,6 +228,18 @@ export async function updatePlan(
   await logActivity("update", "subscription_plans", planId);
 }
 
+export async function updateVideoPurchaseTier(
+  tierId: string,
+  input: { revenuecatProductId: string | null; active: boolean }
+) {
+  const { error } = await supabase
+    .from("video_purchase_tiers")
+    .update({ revenuecat_product_id: input.revenuecatProductId, active: input.active })
+    .eq("id", tierId);
+  if (error) throw new Error(error.message);
+  await logActivity("update", "video_purchase_tiers", tierId);
+}
+
 export async function upsertAppContent(key: string, value: unknown) {
   const { data: userData } = await supabase.auth.getUser();
   const { error } = await supabase

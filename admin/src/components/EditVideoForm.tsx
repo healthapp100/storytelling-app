@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Video } from "../types/database";
+import type { Video, VideoPurchaseTier } from "../types/database";
 import { updateVideo } from "../app/(admin)/sections/[id]/actions";
 import { storagePublicUrl, uploadFileToStorage } from "../lib/storage-upload";
 
@@ -14,7 +14,15 @@ function toDateTimeLocal(iso: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function EditVideoForm({ sectionId, video }: { sectionId: string; video: Video }) {
+export function EditVideoForm({
+  sectionId,
+  video,
+  tiers,
+}: {
+  sectionId: string;
+  video: Video;
+  tiers: VideoPurchaseTier[];
+}) {
   const [open, setOpen] = useState(false);
   const [accessTier, setAccessTier] = useState<"subscription" | "one_time">(video.access_tier);
   const [saving, setSaving] = useState(false);
@@ -101,14 +109,24 @@ export function EditVideoForm({ sectionId, video }: { sectionId: string; video: 
             </label>
           </div>
           {accessTier === "one_time" && (
-            <input
-              name="price_rupees"
-              type="number"
-              defaultValue={video.price_rupees ?? ""}
-              required
-              className={inputClass}
-              placeholder="Price in rupees, e.g. 199"
-            />
+            <label className="block text-sm text-ink-muted">
+              Price tier
+              <select
+                name="price_rupees"
+                required
+                defaultValue={video.price_rupees ?? ""}
+                className={`mt-1 ${inputClass}`}
+              >
+                <option value="" disabled>
+                  Choose a price
+                </option>
+                {tiers.map((tier) => (
+                  <option key={tier.id} value={tier.price_rupees}>
+                    ₹{tier.price_rupees}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
 
           <label className="block text-sm text-ink-muted">

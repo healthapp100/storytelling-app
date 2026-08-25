@@ -23,3 +23,20 @@ export async function updatePlan(planId: string, formData: FormData) {
   await logActivity("update", "subscription_plans", planId);
   revalidatePath("/pricing");
 }
+
+export async function updateVideoPurchaseTier(tierId: string, formData: FormData) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const revenuecatProductId = String(formData.get("revenuecat_product_id") ?? "").trim() || null;
+  const active = formData.get("active") === "on";
+
+  const { error } = await supabase
+    .from("video_purchase_tiers")
+    .update({ revenuecat_product_id: revenuecatProductId, active })
+    .eq("id", tierId);
+  if (error) throw new Error(error.message);
+
+  await logActivity("update", "video_purchase_tiers", tierId);
+  revalidatePath("/pricing");
+}

@@ -1,6 +1,6 @@
 import { createClient } from "../../../lib/supabase/server";
-import type { SubscriptionPlan } from "../../../types/database";
-import { updatePlan } from "./actions";
+import type { SubscriptionPlan, VideoPurchaseTier } from "../../../types/database";
+import { updatePlan, updateVideoPurchaseTier } from "./actions";
 
 const PLAN_LABELS: Record<SubscriptionPlan["code"], string> = {
   daily: "Daily",
@@ -13,11 +13,10 @@ const inputClass =
 
 export default async function PricingPage() {
   const supabase = await createClient();
-  const { data: plans } = await supabase
-    .from("subscription_plans")
-    .select("*")
-    .order("duration_days")
-    .returns<SubscriptionPlan[]>();
+  const [{ data: plans }, { data: tiers }] = await Promise.all([
+    supabase.from("subscription_plans").select("*").order("duration_days").returns<SubscriptionPlan[]>(),
+    supabase.from("video_purchase_tiers").select("*").order("price_rupees").returns<VideoPurchaseTier[]>(),
+  ]);
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -60,6 +59,48 @@ export default async function PricingPage() {
             </label>
             <label className="flex items-center gap-2 text-sm text-ink-muted">
               <input type="checkbox" name="active" defaultChecked={plan.active} className="accent-accent" />
+              Active
+            </label>
+            <button
+              type="submit"
+              className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+            >
+              Save
+            </button>
+          </form>
+        ))}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Pay-per-video</p>
+        <h2 className="mt-1 font-display text-2xl text-ink">Purchase tiers</h2>
+        <p className="mt-2 text-sm text-ink-muted">
+          Real store purchases need a fixed product per price point, not a dynamic price per video —
+          a pay-per-video video&apos;s price must match one of these tiers. Set up a matching
+          consumable product in App Store Connect / Play Console and RevenueCat, then paste its
+          product ID below.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {(tiers ?? []).map((tier) => (
+          <form
+            key={tier.id}
+            action={updateVideoPurchaseTier.bind(null, tier.id)}
+            className="space-y-3 rounded-xl border border-border bg-paper-raised p-5"
+          >
+            <h2 className="font-display text-lg text-ink">₹{tier.price_rupees}</h2>
+            <label className="block text-sm text-ink-muted">
+              RevenueCat product ID
+              <input
+                name="revenuecat_product_id"
+                defaultValue={tier.revenuecat_product_id ?? ""}
+                placeholder="e.g. app.storytelling.video99"
+                className={inputClass}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-ink-muted">
+              <input type="checkbox" name="active" defaultChecked={tier.active} className="accent-accent" />
               Active
             </label>
             <button

@@ -1,5 +1,12 @@
 import { supabase } from "./supabase";
-import type { AppContent, Section, SubscriptionPlan, Video, VideoCatalogEntry } from "../types/database";
+import type {
+  AppContent,
+  Section,
+  SubscriptionPlan,
+  Video,
+  VideoCatalogEntry,
+  VideoPurchaseTier,
+} from "../types/database";
 
 export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   const { data, error } = await supabase
@@ -102,6 +109,24 @@ export async function getAllVideosForSectionAdmin(sectionId: string): Promise<Vi
 
 export async function getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   const { data, error } = await supabase.from("subscription_plans").select("*").order("duration_days");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getVideoPurchaseTiers(): Promise<VideoPurchaseTier[]> {
+  const { data, error } = await supabase
+    .from("video_purchase_tiers")
+    .select("*")
+    .eq("active", true)
+    .order("price_rupees");
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Unlike getVideoPurchaseTiers above (subscriber-facing, active only), the
+// admin config screen needs every tier so an inactive one can be re-enabled.
+export async function getAllVideoPurchaseTiers(): Promise<VideoPurchaseTier[]> {
+  const { data, error } = await supabase.from("video_purchase_tiers").select("*").order("price_rupees");
   if (error) throw error;
   return data ?? [];
 }

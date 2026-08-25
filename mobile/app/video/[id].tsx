@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { getVideo, getVideoCatalogEntry, videoPlaybackUrl } from "../../lib/queries";
+import { purchaseVideo } from "../../lib/purchases";
 import { useToast } from "../../lib/toast";
 import { clearWatchProgress, getWatchProgress, saveWatchProgress } from "../../lib/watchProgress";
 import { colors, fonts, radii, spacing } from "../../lib/theme";
@@ -20,15 +21,33 @@ export default function VideoPlayer() {
   // (subscription-only vs. pay-per-video with no purchase flow yet) instead
   // of one generic "not available" message for every case.
   const [deniedInfo, setDeniedInfo] = useState<VideoCatalogEntry | null | "unknown">("unknown");
+  const [purchasing, setPurchasing] = useState(false);
   const { showToast } = useToast();
   const resumedRef = useRef(false);
 
-  useEffect(() => {
+  const load = () => {
+    setVideo(null);
     getVideo(id)
       .then((v) => setVideo(v ?? "denied"))
       // RLS rejects the row for an unauthorized viewer.
       .catch(() => setVideo("denied"));
-  }, [id]);
+  };
+
+  useEffect(load, [id]);
+
+  const handleBuy = async () => {
+    if (deniedInfo === "unknown" || !deniedInfo) return;
+    setPurchasing(true);
+    try {
+      await purchaseVideo(deniedInfo);
+      showToast("Unlocked! Enjoy the story.", "celebrate");
+      load();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Purchase failed — try again.", "error");
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   useEffect(() => {
     if (video !== "denied") return;
@@ -100,9 +119,16 @@ export default function VideoPlayer() {
           <Stack.Screen options={{ title: "Not available" }} />
           <Text style={styles.deniedTitle}>{deniedInfo.title}</Text>
           <Text style={styles.deniedText}>
-            This story costs ₹{deniedInfo.price_rupees ?? 0} to unlock. Pay-per-video purchases
-            aren&apos;t available in the app yet — we&apos;re working on it, check back soon.
+            This story costs ₹{deniedInfo.price_rupees ?? 0} to unlock — a one-time purchase, yours
+            to keep watching for as long as it stays live.
           </Text>
+          <Pressy style={styles.subscribeButton} onPress={handleBuy} disabled={purchasing}>
+            {purchasing ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.subscribeLabel}>Buy for ₹{deniedInfo.price_rupees ?? 0}</Text>
+            )}
+          </Pressy>
         </View>
       );
     }

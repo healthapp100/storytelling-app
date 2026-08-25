@@ -50,6 +50,13 @@ export type SubscriptionPlan = {
   active: boolean;
 };
 
+export type VideoPurchaseTier = {
+  id: string;
+  price_rupees: number;
+  revenuecat_product_id: string | null;
+  active: boolean;
+};
+
 export type AppContent = {
   id: string;
   key: string;

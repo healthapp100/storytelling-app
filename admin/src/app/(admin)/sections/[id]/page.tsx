@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server";
-import type { Section, Video } from "../../../../types/database";
+import type { Section, Video, VideoPurchaseTier } from "../../../../types/database";
 import { VideoUploadForm } from "../../../../components/VideoUploadForm";
 import { EditVideoForm } from "../../../../components/EditVideoForm";
 import { ConfirmSubmitButton } from "../../../../components/ConfirmSubmitButton";
@@ -27,7 +27,7 @@ export default async function SectionDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: section }, { data: videos }] = await Promise.all([
+  const [{ data: section }, { data: videos }, { data: tiers }] = await Promise.all([
     supabase.from("sections").select("*").eq("id", id).maybeSingle<Section>(),
     supabase
       .from("videos")
@@ -35,6 +35,12 @@ export default async function SectionDetailPage({
       .eq("section_id", id)
       .order("posted_at", { ascending: false })
       .returns<Video[]>(),
+    supabase
+      .from("video_purchase_tiers")
+      .select("*")
+      .eq("active", true)
+      .order("price_rupees")
+      .returns<VideoPurchaseTier[]>(),
   ]);
 
   if (!section) {
@@ -84,7 +90,7 @@ export default async function SectionDetailPage({
                 <div className="flex shrink-0 items-center gap-3">
                   {video.status === "live" && (
                     <>
-                      <EditVideoForm sectionId={id} video={video} />
+                      <EditVideoForm sectionId={id} video={video} tiers={tiers ?? []} />
                       {!video.is_daily_featured && (
                         <form action={setDailyFeatured.bind(null, id, video.id)}>
                           <button
@@ -123,7 +129,7 @@ export default async function SectionDetailPage({
         )}
       </ul>
 
-      <VideoUploadForm sectionId={id} />
+      <VideoUploadForm sectionId={id} tiers={tiers ?? []} />
     </div>
   );
 }

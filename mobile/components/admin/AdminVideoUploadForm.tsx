@@ -1,15 +1,16 @@
 import * as DocumentPicker from "expo-document-picker";
 import { createVideoPlayer } from "expo-video";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { DateTimeField } from "../DateTimeField";
 import { createVideo } from "../../lib/adminActions";
-import { storagePublicUrl } from "../../lib/queries";
+import { getVideoPurchaseTiers, storagePublicUrl } from "../../lib/queries";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
 import { useToast } from "../../lib/toast";
 import { colors, radii, shadow, spacing } from "../../lib/theme";
+import type { VideoPurchaseTier } from "../../types/database";
 
 // Reads the duration straight off the picked file so admins never have to
 // type it in by hand. Best-effort: if the player can't probe the file for
@@ -38,12 +39,17 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [thumbnail, setThumbnail] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [accessTier, setAccessTier] = useState<"subscription" | "one_time">("subscription");
-  const [priceRupees, setPriceCents] = useState("");
+  const [priceRupees, setPriceRupees] = useState<number | null>(null);
+  const [tiers, setTiers] = useState<VideoPurchaseTier[]>([]);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [isDailyFeatured, setIsDailyFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progressLabel, setProgressLabel] = useState("");
   const { showToast } = useToast();
+
+  useEffect(() => {
+    getVideoPurchaseTiers().then(setTiers);
+  }, []);
 
   const pickFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "video/*" });
@@ -61,9 +67,9 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       return;
     }
     const expiryDate = expiresAt;
-    const price = accessTier === "one_time" ? Number(priceRupees) : null;
-    if (accessTier === "one_time" && (!price || price <= 0)) {
-      showToast("Pay-per-video content needs a price greater than zero.", "error");
+    const price = accessTier === "one_time" ? priceRupees : null;
+    if (accessTier === "one_time" && !price) {
+      showToast("Pick a price tier for pay-per-video content.", "error");
       return;
     }
 
@@ -109,7 +115,7 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       setDescription("");
       setFile(null);
       setThumbnail(null);
-      setPriceCents("");
+      setPriceRupees(null);
       setExpiresAt(null);
       setIsDailyFeatured(false);
       showToast("Video uploaded!", "celebrate");
@@ -156,13 +162,27 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
         </Pressable>
       </View>
       {accessTier === "one_time" && (
-        <AppTextInput
-          style={styles.input}
-          placeholder="Price in rupees, e.g. 199"
-          value={priceRupees}
-          onChangeText={setPriceCents}
-          keyboardType="number-pad"
-        />
+        <View style={styles.tierRow}>
+          {tiers.length === 0 ? (
+            <Text style={styles.thumbnailPickerLabel}>
+              No price tiers set up yet — add one from the admin dashboard first.
+            </Text>
+          ) : (
+            tiers.map((tier) => (
+              <Pressable
+                key={tier.id}
+                style={[styles.tierChip, priceRupees === tier.price_rupees && styles.tierChipActive]}
+                onPress={() => setPriceRupees(tier.price_rupees)}
+              >
+                <Text
+                  style={[styles.tierChipLabel, priceRupees === tier.price_rupees && styles.tierChipLabelActive]}
+                >
+                  ₹{tier.price_rupees}
+                </Text>
+              </Pressable>
+            ))
+          )}
+        </View>
       )}
 
       <DateTimeField
@@ -225,6 +245,17 @@ const styles = StyleSheet.create({
   thumbnailPickerLabel: { color: colors.inkMuted, fontWeight: "600", fontSize: 13 },
   thumbnailPreview: { width: "100%", height: 120, borderRadius: radii.sm },
   row: { flexDirection: "row", gap: spacing.lg },
+  tierRow: { flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" },
+  tierChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.pill,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  tierChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  tierChipLabel: { fontSize: 14, fontWeight: "600", color: colors.ink },
+  tierChipLabelActive: { color: "#fff" },
   radioRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   radioDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, borderColor: colors.border },
   radioDotActive: { backgroundColor: colors.accent, borderColor: colors.accent },
