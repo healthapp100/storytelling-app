@@ -72,7 +72,7 @@ export default async function SectionDetailPage({
                 <p className="text-xs text-ink-muted">
                   Posted {formatDate(video.posted_at)} · Expires {formatDate(video.expires_at)}
                   {video.access_tier === "one_time" &&
-                    ` · ₹${((video.price_cents ?? 0) / 100).toFixed(2)}`}
+                    ` · ₹${video.price_rupees ?? 0}`}
                 </p>
               </div>
 

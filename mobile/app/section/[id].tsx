@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getVideosForSection } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
@@ -18,9 +19,13 @@ function formatDuration(seconds: number | null): string {
 export default function SectionDetail() {
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
   const [videos, setVideos] = useState<Video[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(() => {
-    getVideosForSection(id).then(setVideos);
+    setFailed(false);
+    getVideosForSection(id)
+      .then(setVideos)
+      .catch(() => setFailed(true));
   }, [id]);
 
   useEffect(() => {
@@ -28,6 +33,14 @@ export default function SectionDetail() {
   }, [load]);
 
   useRealtimeTable("videos", load, `section_id=eq.${id}`);
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ErrorState onRetry={load} />
+      </SafeAreaView>
+    );
+  }
 
   if (!videos) {
     return (

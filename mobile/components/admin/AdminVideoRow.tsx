@@ -4,6 +4,7 @@ import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
 import { expireVideoNow, setDailyFeatured, updateVideo } from "../../lib/adminActions";
+import { useToast } from "../../lib/toast";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
 
@@ -23,6 +24,7 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description ?? "");
   const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
   const statusStyle = STATUS_STYLES[video.status];
 
@@ -35,12 +37,13 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
         durationSeconds: video.duration_seconds,
         expiresAt: video.expires_at,
         accessTier: video.access_tier,
-        priceCents: video.price_cents,
+        priceRupees: video.price_rupees,
       });
       setEditing(false);
+      showToast("Video updated.", "success");
       onChanged();
     } catch (error) {
-      Alert.alert("Couldn't save", error instanceof Error ? error.message : "Try again.");
+      showToast(error instanceof Error ? error.message : "Couldn't save — try again.", "error");
     } finally {
       setSaving(false);
     }
@@ -49,9 +52,10 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
   const handleFeature = async () => {
     try {
       await setDailyFeatured(video.id);
+      showToast("Set as today's video.", "success");
       onChanged();
     } catch (error) {
-      Alert.alert("Couldn't feature", error instanceof Error ? error.message : "Try again.");
+      showToast(error instanceof Error ? error.message : "Couldn't feature — try again.", "error");
     }
   };
 
@@ -64,9 +68,10 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
         onPress: async () => {
           try {
             await expireVideoNow(video.id);
+            showToast("Video removed.", "success");
             onChanged();
           } catch (error) {
-            Alert.alert("Couldn't remove", error instanceof Error ? error.message : "Try again.");
+            showToast(error instanceof Error ? error.message : "Couldn't remove — try again.", "error");
           }
         },
       },
@@ -90,7 +95,7 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
       </View>
       <Text style={styles.meta}>
         Posted {formatDate(video.posted_at)} · Expires {formatDate(video.expires_at)}
-        {video.access_tier === "one_time" && ` · ₹${((video.price_cents ?? 0) / 100).toFixed(2)}`}
+        {video.access_tier === "one_time" && ` · ₹${video.price_rupees ?? 0}`}
       </Text>
 
       {editing ? (

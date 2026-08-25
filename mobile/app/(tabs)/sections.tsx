@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getSections } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
@@ -12,9 +13,13 @@ import type { Section } from "../../types/database";
 
 export default function Sections() {
   const [sections, setSections] = useState<Section[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(() => {
-    getSections().then(setSections);
+    setFailed(false);
+    getSections()
+      .then(setSections)
+      .catch(() => setFailed(true));
   }, []);
 
   useEffect(() => {
@@ -22,6 +27,14 @@ export default function Sections() {
   }, [load]);
 
   useRealtimeTable("sections", load);
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <ErrorState onRetry={load} />
+      </SafeAreaView>
+    );
+  }
 
   if (!sections) {
     return (

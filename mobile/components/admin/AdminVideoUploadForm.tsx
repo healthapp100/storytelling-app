@@ -1,23 +1,47 @@
 import * as DocumentPicker from "expo-document-picker";
+import { createVideoPlayer } from "expo-video";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { DateTimeField } from "../DateTimeField";
 import { createVideo } from "../../lib/adminActions";
 import { uploadLocalFileToStorage } from "../../lib/storageUpload";
+import { useToast } from "../../lib/toast";
 import { colors, radii, shadow, spacing } from "../../lib/theme";
+
+// Reads the duration straight off the picked file so admins never have to
+// type it in by hand. Best-effort: if the player can't probe the file for
+// any reason, upload still proceeds with an unknown duration.
+function detectDuration(uri: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    const player = createVideoPlayer(uri);
+    let settled = false;
+    const finish = (value: number | null) => {
+      if (settled) return;
+      settled = true;
+      subscription.remove();
+      player.release();
+      resolve(value);
+    };
+    const subscription = player.addListener("sourceLoad", (payload) => {
+      finish(Number.isFinite(payload.duration) ? Math.round(payload.duration) : null);
+    });
+    setTimeout(() => finish(null), 8000);
+  });
+}
 
 export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: string; onUploaded: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [accessTier, setAccessTier] = useState<"subscription" | "one_time">("subscription");
-  const [priceCents, setPriceCents] = useState("");
+  const [priceRupees, setPriceCents] = useState("");
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [isDailyFeatured, setIsDailyFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progressLabel, setProgressLabel] = useState("");
+  const { showToast } = useToast();
 
   const pickFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: "video/*" });
@@ -26,18 +50,21 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
 
   const handleSubmit = async () => {
     if (!title.trim() || !file || !expiresAt) {
-      Alert.alert("Missing fields", "Title, a video file, and an expiry date are all required.");
+      showToast("Title, a video file, and an expiry date are all required.", "error");
       return;
     }
     const expiryDate = expiresAt;
-    const price = accessTier === "one_time" ? Number(priceCents) : null;
+    const price = accessTier === "one_time" ? Number(priceRupees) : null;
     if (accessTier === "one_time" && (!price || price <= 0)) {
-      Alert.alert("Missing price", "Pay-per-video content needs a price greater than zero.");
+      showToast("Pay-per-video content needs a price greater than zero.", "error");
       return;
     }
 
     setUploading(true);
     try {
+      setProgressLabel("Reading video details…");
+      const durationSeconds = await detectDuration(file.uri);
+
       setProgressLabel("Uploading video…");
       const { storageKey } = await uploadLocalFileToStorage(
         file.uri,
@@ -51,11 +78,11 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
         title: title.trim(),
         description: description.trim() || null,
         storageKey,
-        durationSeconds: null,
+        durationSeconds,
         expiresAt: expiryDate.toISOString(),
         isDailyFeatured,
         accessTier,
-        priceCents: price,
+        priceRupees: price,
       });
 
       setTitle("");
@@ -64,9 +91,10 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       setPriceCents("");
       setExpiresAt(null);
       setIsDailyFeatured(false);
+      showToast("Video uploaded!", "celebrate");
       onUploaded();
     } catch (error) {
-      Alert.alert("Upload failed", error instanceof Error ? error.message : "Try again.");
+      showToast(error instanceof Error ? error.message : "Upload failed — try again.", "error");
     } finally {
       setUploading(false);
       setProgressLabel("");
@@ -101,8 +129,8 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
       {accessTier === "one_time" && (
         <AppTextInput
           style={styles.input}
-          placeholder="Price in paise (100 = ₹1)"
-          value={priceCents}
+          placeholder="Price in rupees, e.g. 199"
+          value={priceRupees}
           onChangeText={setPriceCents}
           keyboardType="number-pad"
         />

@@ -2,10 +2,12 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ErrorState } from "../components/ErrorState";
 import { Pressy } from "../components/Pressy";
 import { getSubscriptionPlans } from "../lib/queries";
 import { purchasePackageByIdentifier, restorePurchases } from "../lib/purchases";
 import { useRealtimeTable } from "../lib/realtime";
+import { useToast } from "../lib/toast";
 import { colors, fonts, radii, shadow, spacing } from "../lib/theme";
 import type { SubscriptionPlan } from "../types/database";
 
@@ -21,16 +23,21 @@ const PLAN_HINTS: Record<SubscriptionPlan["code"], string> = {
   monthly: "Best value, full month",
 };
 
-function formatPrice(cents: number): string {
-  return `₹${(cents / 100).toFixed(2)}`;
+function formatPrice(rupees: number): string {
+  return `₹${rupees}`;
 }
 
 export default function Subscribe() {
   const [plans, setPlans] = useState<SubscriptionPlan[] | null>(null);
   const [purchasingCode, setPurchasingCode] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
-    getSubscriptionPlans().then(setPlans);
+    setFailed(false);
+    getSubscriptionPlans()
+      .then(setPlans)
+      .catch(() => setFailed(true));
   }, []);
 
   useEffect(() => {
@@ -47,14 +54,22 @@ export default function Subscribe() {
     setPurchasingCode(plan.code);
     try {
       await purchasePackageByIdentifier(plan.revenuecat_product_id);
-      Alert.alert("You're subscribed", "Enjoy today's stories.");
+      showToast("You're subscribed! Enjoy today's stories.", "celebrate");
       router.back();
     } catch (error) {
-      Alert.alert("Purchase failed", error instanceof Error ? error.message : "Try again.");
+      showToast(error instanceof Error ? error.message : "Purchase failed — try again.", "error");
     } finally {
       setPurchasingCode(null);
     }
   };
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+        <ErrorState onRetry={load} />
+      </SafeAreaView>
+    );
+  }
 
   if (!plans) {
     return (
@@ -86,7 +101,7 @@ export default function Subscribe() {
             {purchasingCode === plan.code ? (
               <ActivityIndicator color={colors.accent} />
             ) : (
-              <Text style={styles.planPrice}>{formatPrice(plan.price_cents)}</Text>
+              <Text style={styles.planPrice}>{formatPrice(plan.price_rupees)}</Text>
             )}
           </Pressy>
         ))}
@@ -96,9 +111,9 @@ export default function Subscribe() {
           onPress={async () => {
             try {
               await restorePurchases();
-              Alert.alert("Restored", "Your purchases have been restored.");
+              showToast("Your purchases have been restored.", "success");
             } catch (error) {
-              Alert.alert("Nothing to restore", error instanceof Error ? error.message : "");
+              showToast(error instanceof Error ? error.message : "Nothing to restore.", "error");
             }
           }}
         >

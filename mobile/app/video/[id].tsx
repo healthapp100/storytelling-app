@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { getVideo, videoPlaybackUrl } from "../../lib/queries";
+import { useToast } from "../../lib/toast";
 import { colors, fonts, radii, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
 
 export default function VideoPlayer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [video, setVideo] = useState<Video | null | "denied">(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     getVideo(id)
@@ -25,6 +27,14 @@ export default function VideoPlayer() {
       p.play();
     }
   );
+
+  useEffect(() => {
+    const subscription = player.addListener("playToEnd", () => {
+      showToast("Story complete — well told!", "celebrate");
+    });
+    return () => subscription.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player]);
 
   if (video === null) {
     return (

@@ -77,12 +77,12 @@ export function EditVideoForm({ sectionId, video }: { sectionId: string; video: 
           </div>
           {accessTier === "one_time" && (
             <input
-              name="price_cents"
+              name="price_rupees"
               type="number"
-              defaultValue={video.price_cents ?? ""}
+              defaultValue={video.price_rupees ?? ""}
               required
               className={inputClass}
-              placeholder="Price in paise (100 = ₹1)"
+              placeholder="Price in rupees, e.g. 199"
             />
           )}
 

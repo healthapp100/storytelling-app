@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider } from "../lib/session";
+import { ToastProvider } from "../lib/toast";
 import { colors } from "../lib/theme";
 // Importing this runs Sentry.init as a side effect — must happen before
 // anything else so it can catch errors thrown during startup too.
@@ -42,28 +43,30 @@ function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="video/[id]"
-            options={{ headerShown: true, title: "", headerStyle: { backgroundColor: colors.paper } }}
-          />
-          <Stack.Screen
-            name="admin-section/[id]"
-            options={{ headerShown: true, title: "", headerStyle: { backgroundColor: colors.paper } }}
-          />
-          <Stack.Screen
-            name="subscribe"
-            options={{
-              headerShown: true,
-              title: "Subscribe",
-              presentation: "modal",
-              headerStyle: { backgroundColor: colors.paper },
-            }}
-          />
-        </Stack>
+        <ToastProvider>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="video/[id]"
+              options={{ headerShown: true, title: "", headerStyle: { backgroundColor: colors.paper } }}
+            />
+            <Stack.Screen
+              name="admin-section/[id]"
+              options={{ headerShown: true, title: "", headerStyle: { backgroundColor: colors.paper } }}
+            />
+            <Stack.Screen
+              name="subscribe"
+              options={{
+                headerShown: true,
+                title: "Subscribe",
+                presentation: "modal",
+                headerStyle: { backgroundColor: colors.paper },
+              }}
+            />
+          </Stack>
+        </ToastProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );

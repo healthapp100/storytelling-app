@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { AppTextInput } from "../../components/AppTextInput";
+import { ErrorState } from "../../components/ErrorState";
 import { AdminSectionRow } from "../../components/admin/AdminSectionRow";
 import { createSection, updatePlan, upsertAppContent } from "../../lib/adminActions";
 import { getAppContent, getAllSubscriptionPlans, getSections } from "../../lib/queries";
@@ -30,6 +31,7 @@ const PLAN_LABELS: Record<SubscriptionPlan["code"], string> = {
 export default function AdminDashboard() {
   const { isAdmin, loading: sessionLoading } = useSession();
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [introText, setIntroText] = useState("");
@@ -41,17 +43,23 @@ export default function AdminDashboard() {
   const [creatingSection, setCreatingSection] = useState(false);
 
   const load = useCallback(async () => {
-    const [sectionRows, planRows, introTextRow, introVideoRow] = await Promise.all([
-      getSections(),
-      getAllSubscriptionPlans(),
-      getAppContent("home_intro_text"),
-      getAppContent("home_intro_video_key"),
-    ]);
-    setSections(sectionRows);
-    setPlans(planRows);
-    setIntroText((introTextRow?.value as string) ?? "");
-    setIntroVideoKey((introVideoRow?.value as string) ?? null);
-    setLoading(false);
+    setFailed(false);
+    try {
+      const [sectionRows, planRows, introTextRow, introVideoRow] = await Promise.all([
+        getSections(),
+        getAllSubscriptionPlans(),
+        getAppContent("home_intro_text"),
+        getAppContent("home_intro_video_key"),
+      ]);
+      setSections(sectionRows);
+      setPlans(planRows);
+      setIntroText((introTextRow?.value as string) ?? "");
+      setIntroVideoKey((introVideoRow?.value as string) ?? null);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -102,10 +110,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSavePlan = async (plan: SubscriptionPlan, priceCents: number) => {
+  const handleSavePlan = async (plan: SubscriptionPlan, priceRupees: number) => {
     try {
       await updatePlan(plan.id, {
-        priceCents,
+        priceRupees,
         revenuecatProductId: plan.revenuecat_product_id,
         active: plan.active,
       });
@@ -117,6 +125,14 @@ export default function AdminDashboard() {
 
   if (!sessionLoading && !isAdmin) {
     return <Redirect href="/(tabs)" />;
+  }
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <ErrorState onRetry={load} />
+      </SafeAreaView>
+    );
   }
 
   if (loading) {
@@ -191,16 +207,16 @@ export default function AdminDashboard() {
   );
 }
 
-function PlanRow({ plan, onSave }: { plan: SubscriptionPlan; onSave: (priceCents: number) => void }) {
-  const [value, setValue] = useState(String(plan.price_cents));
+function PlanRow({ plan, onSave }: { plan: SubscriptionPlan; onSave: (priceRupees: number) => void }) {
+  const [value, setValue] = useState(String(plan.price_rupees));
 
   // Keeps this row in sync if the price changes from elsewhere (another
   // admin, or the realtime refresh after this same save completes) — a
   // plain useState initializer only runs once and would otherwise go
   // stale while this row's component instance stays mounted.
   useEffect(() => {
-    setValue(String(plan.price_cents));
-  }, [plan.price_cents]);
+    setValue(String(plan.price_rupees));
+  }, [plan.price_rupees]);
 
   return (
     <View style={styles.planRow}>

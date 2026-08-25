@@ -126,7 +126,7 @@ erDiagram
         timestamptz expires_at "NOT NULL — mandatory"
         bool is_daily_featured "drives Today's Video"
         text access_tier "subscription | one_time"
-        int price_cents "if one_time"
+        int price_rupees "if one_time"
         text status "scheduled | live | expired | deleted"
         uuid created_by FK
         timestamptz created_at
@@ -135,7 +135,7 @@ erDiagram
     subscription_plans {
         uuid id PK
         text code "daily | weekly | monthly"
-        int price_cents
+        int price_rupees
         int duration_days
         text revenuecat_product_id
         bool active
@@ -215,7 +215,7 @@ stateDiagram-v2
 
 - **RevenueCat** sits between the app and each store's IAP system, tracking entitlements (`daily`, `weekly`, `monthly`, or a per-video one-off) without you writing StoreKit/Play Billing code directly.
 - Flow: user taps a plan → RevenueCat presents the store's native purchase sheet → store confirms → RevenueCat fires a webhook → an Edge Function upserts `user_subscriptions` (or inserts a `video_purchases` row for a one-off) → app re-checks entitlement via RLS-gated query.
-- Pricing lives in `subscription_plans` / `videos.price_cents` in your DB, but the **actual chargeable products must also be created in App Store Connect and Google Play Console** with matching IDs (`revenuecat_product_id`) — the store, not your database, is the source of truth for what a user is actually billed.
+- Pricing lives in `subscription_plans` / `videos.price_rupees` in your DB (whole rupees, e.g. 199 = ₹199 — not paise), but the **actual chargeable products must also be created in App Store Connect and Google Play Console** with matching IDs (`revenuecat_product_id`) — the store, not your database, is the source of truth for what a user is actually billed.
 - Take rate: Apple/Google take 15–30% of IAP revenue. Factor this into pricing; there's no way around it for content unlocked inside a native app.
 
 ---

@@ -17,12 +17,12 @@ export async function createVideo(sectionId: string, formData: FormData) {
   const accessTier = String(formData.get("access_tier") ?? "subscription") as
     | "subscription"
     | "one_time";
-  const priceCents = accessTier === "one_time" ? Number(formData.get("price_cents") ?? 0) : null;
+  const priceRupees = accessTier === "one_time" ? Number(formData.get("price_rupees") ?? 0) : null;
 
   if (!title || !storageKey || !expiresAt) {
     throw new Error("Title, an uploaded file, and an expiry date are all required.");
   }
-  if (accessTier === "one_time" && (!priceCents || priceCents <= 0)) {
+  if (accessTier === "one_time" && (!priceRupees || priceRupees <= 0)) {
     throw new Error("Pay-per-video content needs a price greater than zero.");
   }
 
@@ -43,7 +43,7 @@ export async function createVideo(sectionId: string, formData: FormData) {
       expires_at: new Date(expiresAt).toISOString(),
       is_daily_featured: isDailyFeatured,
       access_tier: accessTier,
-      price_cents: priceCents,
+      price_rupees: priceRupees,
       status: "live",
       created_by: userId,
     })
@@ -66,12 +66,12 @@ export async function updateVideo(sectionId: string, videoId: string, formData: 
   const accessTier = String(formData.get("access_tier") ?? "subscription") as
     | "subscription"
     | "one_time";
-  const priceCents = accessTier === "one_time" ? Number(formData.get("price_cents") ?? 0) : null;
+  const priceRupees = accessTier === "one_time" ? Number(formData.get("price_rupees") ?? 0) : null;
 
   if (!title || !expiresAt) {
     throw new Error("Title and an expiry date are required.");
   }
-  if (accessTier === "one_time" && (!priceCents || priceCents <= 0)) {
+  if (accessTier === "one_time" && (!priceRupees || priceRupees <= 0)) {
     throw new Error("Pay-per-video content needs a price greater than zero.");
   }
 
@@ -85,7 +85,7 @@ export async function updateVideo(sectionId: string, videoId: string, formData: 
       duration_seconds: durationSeconds,
       expires_at: new Date(expiresAt).toISOString(),
       access_tier: accessTier,
-      price_cents: priceCents,
+      price_rupees: priceRupees,
     })
     .eq("id", videoId);
   if (error) throw new Error(error.message);

@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getAppContent, getTodaysVideo, storagePublicUrl } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
@@ -18,20 +19,27 @@ import type { Video } from "../../types/database";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [introText, setIntroText] = useState("");
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
   const [todaysVideo, setTodaysVideo] = useState<Video | null>(null);
 
   const load = useCallback(async () => {
-    const [about, introKey, today] = await Promise.all([
-      getAppContent("home_intro_text"),
-      getAppContent("home_intro_video_key"),
-      getTodaysVideo(),
-    ]);
-    setIntroText((about?.value as string) ?? "");
-    setIntroVideoUrl(introKey?.value ? storagePublicUrl(introKey.value as string) : null);
-    setTodaysVideo(today);
-    setLoading(false);
+    setFailed(false);
+    try {
+      const [about, introKey, today] = await Promise.all([
+        getAppContent("home_intro_text"),
+        getAppContent("home_intro_video_key"),
+        getTodaysVideo(),
+      ]);
+      setIntroText((about?.value as string) ?? "");
+      setIntroVideoUrl(introKey?.value ? storagePublicUrl(introKey.value as string) : null);
+      setTodaysVideo(today);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -46,6 +54,14 @@ export default function Home() {
   const introPlayer = useVideoPlayer(introVideoUrl ?? "", (player) => {
     player.loop = true;
   });
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <ErrorState onRetry={load} />
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     return (

@@ -64,7 +64,7 @@ export type CreateVideoInput = {
   expiresAt: string; // ISO
   isDailyFeatured: boolean;
   accessTier: AccessTier;
-  priceCents: number | null;
+  priceRupees: number | null;
 };
 
 export async function createVideo(input: CreateVideoInput) {
@@ -85,7 +85,7 @@ export async function createVideo(input: CreateVideoInput) {
       expires_at: input.expiresAt,
       is_daily_featured: input.isDailyFeatured,
       access_tier: input.accessTier,
-      price_cents: input.priceCents,
+      price_rupees: input.priceRupees,
       status: "live",
       created_by: userData.user?.id ?? null,
     })
@@ -101,7 +101,7 @@ export type UpdateVideoInput = {
   durationSeconds: number | null;
   expiresAt: string;
   accessTier: AccessTier;
-  priceCents: number | null;
+  priceRupees: number | null;
 };
 
 export async function updateVideo(videoId: string, input: UpdateVideoInput) {
@@ -113,7 +113,7 @@ export async function updateVideo(videoId: string, input: UpdateVideoInput) {
       duration_seconds: input.durationSeconds,
       expires_at: input.expiresAt,
       access_tier: input.accessTier,
-      price_cents: input.priceCents,
+      price_rupees: input.priceRupees,
     })
     .eq("id", videoId);
   if (error) throw new Error(error.message);
@@ -142,12 +142,12 @@ export async function expireVideoNow(videoId: string) {
 
 export async function updatePlan(
   planId: string,
-  input: { priceCents: number; revenuecatProductId: string | null; active: boolean }
+  input: { priceRupees: number; revenuecatProductId: string | null; active: boolean }
 ) {
   const { error } = await supabase
     .from("subscription_plans")
     .update({
-      price_cents: input.priceCents,
+      price_rupees: input.priceRupees,
       revenuecat_product_id: input.revenuecatProductId,
       active: input.active,
     })

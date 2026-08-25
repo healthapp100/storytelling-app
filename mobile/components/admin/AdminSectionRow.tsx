@@ -6,6 +6,7 @@ import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
 import { deleteSection, updateSection } from "../../lib/adminActions";
+import { useToast } from "../../lib/toast";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Section } from "../../types/database";
 
@@ -14,6 +15,7 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
   const [title, setTitle] = useState(section.title);
   const [description, setDescription] = useState(section.description ?? "");
   const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
   const handleSave = async () => {
     setSaving(true);
@@ -24,9 +26,10 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
         displayOrder: section.display_order,
       });
       setEditing(false);
+      showToast("Section updated.", "success");
       onChanged();
     } catch (error) {
-      Alert.alert("Couldn't save", error instanceof Error ? error.message : "Try again.");
+      showToast(error instanceof Error ? error.message : "Couldn't save — try again.", "error");
     } finally {
       setSaving(false);
     }
@@ -44,9 +47,10 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
           onPress: async () => {
             try {
               await deleteSection(section.id);
+              showToast("Section deleted.", "success");
               onChanged();
             } catch (error) {
-              Alert.alert("Couldn't delete", error instanceof Error ? error.message : "Try again.");
+              showToast(error instanceof Error ? error.message : "Couldn't delete — try again.", "error");
             }
           },
         },

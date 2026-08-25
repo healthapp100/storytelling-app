@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AdminVideoRow } from "../../components/admin/AdminVideoRow";
 import { AdminVideoUploadForm } from "../../components/admin/AdminVideoUploadForm";
+import { ErrorState } from "../../components/ErrorState";
 import { getAllVideosForSectionAdmin } from "../../lib/queries";
 import { useSession } from "../../lib/session";
 import { colors, fonts, spacing } from "../../lib/theme";
@@ -13,9 +14,13 @@ export default function AdminSectionDetail() {
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
   const { isAdmin, loading: sessionLoading } = useSession();
   const [videos, setVideos] = useState<Video[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(() => {
-    getAllVideosForSectionAdmin(id).then(setVideos);
+    setFailed(false);
+    getAllVideosForSectionAdmin(id)
+      .then(setVideos)
+      .catch(() => setFailed(true));
   }, [id]);
 
   useEffect(() => {
@@ -24,6 +29,14 @@ export default function AdminSectionDetail() {
 
   if (!sessionLoading && !isAdmin) {
     return <Redirect href="/(tabs)" />;
+  }
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+        <ErrorState onRetry={load} />
+      </SafeAreaView>
+    );
   }
 
   if (!videos) {

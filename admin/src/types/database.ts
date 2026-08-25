@@ -35,7 +35,7 @@ export type Video = {
   expires_at: string;
   is_daily_featured: boolean;
   access_tier: AccessTier;
-  price_cents: number | null;
+  price_rupees: number | null;
   status: VideoStatus;
   created_by: string | null;
   created_at: string;
@@ -44,7 +44,7 @@ export type Video = {
 export type SubscriptionPlan = {
   id: string;
   code: "daily" | "weekly" | "monthly";
-  price_cents: number;
+  price_rupees: number;
   duration_days: number;
   revenuecat_product_id: string | null;
   active: boolean;
