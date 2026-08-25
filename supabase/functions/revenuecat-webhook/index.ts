@@ -44,8 +44,16 @@ Deno.serve(async (req) => {
   }
 
   const store = event.store === "APP_STORE" ? "app_store" : "play_store";
-  const isActive = ["INITIAL_PURCHASE", "RENEWAL", "UNCANCELLATION"].includes(event.type);
-  const isEnded = ["CANCELLATION", "EXPIRATION"].includes(event.type);
+  // CANCELLATION only means auto-renew was turned off — the user is still
+  // entitled to access until their current paid period actually ends. Only
+  // EXPIRATION means that access has genuinely ended. Treating CANCELLATION
+  // as an immediate expiry (as an earlier version of this did) would cut
+  // off access mid-period for anyone who cancels auto-renew, which is most
+  // people who cancel at all. has_active_subscription() in 0009 checks
+  // expires_at, not just status, so 'cancelled' still grants access until
+  // that date passes.
+  const status: "active" | "expired" | "cancelled" =
+    event.type === "EXPIRATION" ? "expired" : event.type === "CANCELLATION" ? "cancelled" : "active";
 
   await supabase
     .from("user_subscriptions")
@@ -56,7 +64,7 @@ Deno.serve(async (req) => {
         expires_at: event.expiration_at_ms
           ? new Date(event.expiration_at_ms).toISOString()
           : new Date().toISOString(),
-        status: isActive ? "active" : isEnded ? "expired" : "active",
+        status,
         store,
         revenuecat_entitlement_id: event.product_id,
       },
