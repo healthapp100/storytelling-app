@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../Pressy";
 import { AppTextInput } from "../AppTextInput";
 import { TextButton } from "../TextButton";
-import { expireVideoNow, setDailyFeatured, updateVideo } from "../../lib/adminActions";
+import { deleteVideo, expireVideoNow, setDailyFeatured, updateVideo } from "../../lib/adminActions";
 import { useToast } from "../../lib/toast";
 import { colors, radii, spacing } from "../../lib/theme";
 import type { Video } from "../../types/database";
@@ -78,6 +78,29 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
     ]);
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete this video?",
+      "This can't be undone. Videos no one has purchased are erased completely; a video someone bought stays on record for accounting, but disappears from the app.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteVideo(video.id);
+              showToast("Video deleted.", "success");
+              onChanged();
+            } catch (error) {
+              showToast(error instanceof Error ? error.message : "Couldn't delete — try again.", "error");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -117,18 +140,25 @@ export function AdminVideoRow({ video, onChanged }: { video: Video; onChanged: (
           </View>
         </View>
       ) : (
-        video.status === "live" && (
+        video.status !== "deleted" && (
           <View style={styles.row}>
-            <TextButton style={styles.editLabel} onPress={() => setEditing(true)}>
-              Edit
-            </TextButton>
-            {!video.is_daily_featured && (
-              <TextButton style={styles.featureLabel} onPress={handleFeature}>
-                Feature
-              </TextButton>
+            {video.status === "live" && (
+              <>
+                <TextButton style={styles.editLabel} onPress={() => setEditing(true)}>
+                  Edit
+                </TextButton>
+                {!video.is_daily_featured && (
+                  <TextButton style={styles.featureLabel} onPress={handleFeature}>
+                    Feature
+                  </TextButton>
+                )}
+                <TextButton style={styles.deleteLabel} onPress={handleExpire}>
+                  Remove now
+                </TextButton>
+              </>
             )}
-            <TextButton style={styles.deleteLabel} onPress={handleExpire}>
-              Remove now
+            <TextButton style={styles.deleteLabel} onPress={handleDelete}>
+              Delete
             </TextButton>
           </View>
         )

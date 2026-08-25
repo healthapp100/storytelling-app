@@ -4,7 +4,7 @@ import type { Section, Video } from "../../../../types/database";
 import { VideoUploadForm } from "../../../../components/VideoUploadForm";
 import { EditVideoForm } from "../../../../components/EditVideoForm";
 import { ConfirmSubmitButton } from "../../../../components/ConfirmSubmitButton";
-import { expireVideoNow, setDailyFeatured } from "./actions";
+import { deleteVideo, expireVideoNow, setDailyFeatured } from "./actions";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -76,25 +76,37 @@ export default async function SectionDetailPage({
                 </p>
               </div>
 
-              {video.status === "live" && (
+              {video.status !== "deleted" && (
                 <div className="flex shrink-0 items-center gap-3">
-                  <EditVideoForm sectionId={id} video={video} />
-                  {!video.is_daily_featured && (
-                    <form action={setDailyFeatured.bind(null, id, video.id)}>
-                      <button
-                        type="submit"
-                        className="text-sm font-medium text-accent transition-colors hover:text-accent-ink hover:underline"
-                      >
-                        Feature
-                      </button>
-                    </form>
+                  {video.status === "live" && (
+                    <>
+                      <EditVideoForm sectionId={id} video={video} />
+                      {!video.is_daily_featured && (
+                        <form action={setDailyFeatured.bind(null, id, video.id)}>
+                          <button
+                            type="submit"
+                            className="text-sm font-medium text-accent transition-colors hover:text-accent-ink hover:underline"
+                          >
+                            Feature
+                          </button>
+                        </form>
+                      )}
+                      <form action={expireVideoNow.bind(null, id, video.id)}>
+                        <ConfirmSubmitButton
+                          confirmMessage={`Remove "${video.title}" now? It will be purged on the next expiry sweep.`}
+                          className="text-sm font-medium text-danger transition-colors hover:underline"
+                        >
+                          Remove now
+                        </ConfirmSubmitButton>
+                      </form>
+                    </>
                   )}
-                  <form action={expireVideoNow.bind(null, id, video.id)}>
+                  <form action={deleteVideo.bind(null, id, video.id)}>
                     <ConfirmSubmitButton
-                      confirmMessage={`Remove "${video.title}" now? It will be purged on the next expiry sweep.`}
+                      confirmMessage={`Delete "${video.title}"? This can't be undone. Videos no one has purchased are erased completely; a video someone bought stays on record for accounting, but disappears from the app.`}
                       className="text-sm font-medium text-danger transition-colors hover:underline"
                     >
-                      Remove now
+                      Delete
                     </ConfirmSubmitButton>
                   </form>
                 </div>

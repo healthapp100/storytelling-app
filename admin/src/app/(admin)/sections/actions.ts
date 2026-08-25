@@ -51,14 +51,41 @@ export async function updateSection(sectionId: string, formData: FormData) {
   revalidatePath("/sections");
 }
 
+// Hard-deletes the section and its videos (cascades at the DB level — see
+// migration 0001_init.sql) only when none of those videos have ever been
+// individually purchased. A purchase record cascades off its video row, so
+// wiping a purchased video would destroy the customer's only proof of that
+// transaction. If any video in the section has a purchase on file, the
+// whole delete is blocked — those specific videos never hard-delete (see
+// deleteVideo in sections/[id]/actions.ts), so remove them there first.
 export async function deleteSection(sectionId: string) {
   await requireAdmin();
   const supabase = await createClient();
 
-  // Cascades to that section's videos at the DB level (see migration
-  // 0001_init.sql). Their storage files are NOT cleaned up by this — only the
-  // nightly expiry sweep purges storage. Fine for reorganizing empty/unused
-  // sections; move videos out first if the section is still live.
+  const { data: videos, error: videosError } = await supabase
+    .from("videos")
+    .select("id, storage_key")
+    .eq("section_id", sectionId);
+  if (videosError) throw new Error(videosError.message);
+
+  const videoIds = (videos ?? []).map((v) => v.id);
+  if (videoIds.length > 0) {
+    const { count, error: purchaseError } = await supabase
+      .from("video_purchases")
+      .select("id", { count: "exact", head: true })
+      .in("video_id", videoIds);
+    if (purchaseError) throw new Error(purchaseError.message);
+    if (count && count > 0) {
+      throw new Error(
+        "This section has videos that customers have purchased, so it can't be deleted. Remove those videos individually first."
+      );
+    }
+  }
+
+  for (const video of videos ?? []) {
+    await supabase.storage.from("videos").remove([video.storage_key]);
+  }
+
   const { error } = await supabase.from("sections").delete().eq("id", sectionId);
   if (error) throw new Error(error.message);
 

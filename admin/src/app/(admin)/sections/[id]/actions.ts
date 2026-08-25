@@ -125,8 +125,37 @@ export async function expireVideoNow(sectionId: string, videoId: string) {
   revalidatePath(`/sections/${sectionId}`);
 }
 
-// There's deliberately no hard-delete action: deleting the row outright
-// would leave its file orphaned in storage forever, since only the nightly sweep
-// (status in ('live','scheduled') AND expires_at < now()) purges storage.
-// "Remove now" in the UI calls expireVideoNow above instead, which the sweep
-// will pick up and clean up properly on its next run.
+// Deletes a video outright only if nobody has ever bought it individually.
+// Otherwise the row is kept (status set to "deleted", hidden from every
+// user-facing query) so the purchase record referencing it stays intact —
+// see the matching note on deleteSection in sections/actions.ts.
+export async function deleteVideo(sectionId: string, videoId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: video, error: videoError } = await supabase
+    .from("videos")
+    .select("storage_key")
+    .eq("id", videoId)
+    .single();
+  if (videoError) throw new Error(videoError.message);
+
+  const { count, error: purchaseError } = await supabase
+    .from("video_purchases")
+    .select("id", { count: "exact", head: true })
+    .eq("video_id", videoId);
+  if (purchaseError) throw new Error(purchaseError.message);
+
+  await supabase.storage.from("videos").remove([video.storage_key]);
+
+  if (count && count > 0) {
+    const { error } = await supabase.from("videos").update({ status: "deleted" }).eq("id", videoId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("videos").delete().eq("id", videoId);
+    if (error) throw new Error(error.message);
+  }
+
+  await logActivity("delete", "videos", videoId);
+  revalidatePath(`/sections/${sectionId}`);
+}

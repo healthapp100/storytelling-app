@@ -49,10 +49,71 @@ export async function updateSection(
   await logActivity("update", "sections", sectionId);
 }
 
+// Hard-deletes the section and its videos only when none of those videos
+// have ever been individually purchased — a purchase record cascades off
+// its video row, so wiping a purchased video would destroy the customer's
+// only proof of that transaction. If any video in the section has a
+// purchase on file, the whole section delete is blocked; the admin has to
+// deal with those specific videos (which never hard-delete — see
+// deleteVideo below) before the section can go away.
 export async function deleteSection(sectionId: string) {
+  const { data: videos, error: videosError } = await supabase
+    .from("videos")
+    .select("id, storage_key")
+    .eq("section_id", sectionId);
+  if (videosError) throw new Error(videosError.message);
+
+  const videoIds = (videos ?? []).map((v) => v.id);
+  if (videoIds.length > 0) {
+    const { count, error: purchaseError } = await supabase
+      .from("video_purchases")
+      .select("id", { count: "exact", head: true })
+      .in("video_id", videoIds);
+    if (purchaseError) throw new Error(purchaseError.message);
+    if (count && count > 0) {
+      throw new Error(
+        "This section has videos that customers have purchased, so it can't be deleted. Remove those videos individually first."
+      );
+    }
+  }
+
+  for (const video of videos ?? []) {
+    await supabase.storage.from("videos").remove([video.storage_key]);
+  }
+
   const { error } = await supabase.from("sections").delete().eq("id", sectionId);
   if (error) throw new Error(error.message);
   await logActivity("delete", "sections", sectionId);
+}
+
+// Deletes a video outright only if nobody has ever bought it individually.
+// Otherwise the row is kept (status set to "deleted", hidden from every
+// user-facing query) so the purchase record referencing it stays intact —
+// see the matching note on deleteSection above.
+export async function deleteVideo(videoId: string) {
+  const { data: video, error: videoError } = await supabase
+    .from("videos")
+    .select("storage_key")
+    .eq("id", videoId)
+    .single();
+  if (videoError) throw new Error(videoError.message);
+
+  const { count, error: purchaseError } = await supabase
+    .from("video_purchases")
+    .select("id", { count: "exact", head: true })
+    .eq("video_id", videoId);
+  if (purchaseError) throw new Error(purchaseError.message);
+
+  await supabase.storage.from("videos").remove([video.storage_key]);
+
+  if (count && count > 0) {
+    const { error } = await supabase.from("videos").update({ status: "deleted" }).eq("id", videoId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("videos").delete().eq("id", videoId);
+    if (error) throw new Error(error.message);
+  }
+  await logActivity("delete", "videos", videoId);
 }
 
 export type CreateVideoInput = {
