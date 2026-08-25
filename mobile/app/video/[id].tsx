@@ -3,23 +3,33 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
-import { getVideo, videoPlaybackUrl } from "../../lib/queries";
+import { getVideo, getVideoCatalogEntry, videoPlaybackUrl } from "../../lib/queries";
 import { useToast } from "../../lib/toast";
 import { colors, fonts, radii, spacing } from "../../lib/theme";
-import type { Video } from "../../types/database";
+import type { Video, VideoCatalogEntry } from "../../types/database";
 
 export default function VideoPlayer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [video, setVideo] = useState<Video | null | "denied">(null);
+  // Only fetched when access is denied — tells the denial screen *why*
+  // (subscription-only vs. pay-per-video with no purchase flow yet) instead
+  // of one generic "not available" message for every case.
+  const [deniedInfo, setDeniedInfo] = useState<VideoCatalogEntry | null | "unknown">("unknown");
   const { showToast } = useToast();
 
   useEffect(() => {
     getVideo(id)
       .then((v) => setVideo(v ?? "denied"))
-      // RLS rejects the row for an unauthorized viewer — surface the same
-      // "not available" state rather than distinguishing the error reason.
+      // RLS rejects the row for an unauthorized viewer.
       .catch(() => setVideo("denied"));
   }, [id]);
+
+  useEffect(() => {
+    if (video !== "denied") return;
+    getVideoCatalogEntry(id)
+      .then(setDeniedInfo)
+      .catch(() => setDeniedInfo(null));
+  }, [video, id]);
 
   const player = useVideoPlayer(
     video && video !== "denied" ? videoPlaybackUrl(video) : "",
@@ -46,12 +56,36 @@ export default function VideoPlayer() {
   }
 
   if (video === "denied") {
+    if (deniedInfo === "unknown") {
+      return (
+        <View style={styles.center}>
+          <Stack.Screen options={{ title: "Loading…" }} />
+          <ActivityIndicator color={colors.accent} />
+        </View>
+      );
+    }
+
+    if (deniedInfo?.access_tier === "one_time") {
+      return (
+        <View style={styles.center}>
+          <Stack.Screen options={{ title: "Not available" }} />
+          <Text style={styles.deniedTitle}>{deniedInfo.title}</Text>
+          <Text style={styles.deniedText}>
+            This story costs ₹{deniedInfo.price_rupees ?? 0} to unlock. Pay-per-video purchases
+            aren&apos;t available in the app yet — we&apos;re working on it, check back soon.
+          </Text>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.center}>
         <Stack.Screen options={{ title: "Not available" }} />
-        <Text style={styles.deniedTitle}>Not available right now</Text>
+        <Text style={styles.deniedTitle}>{deniedInfo ? deniedInfo.title : "Not available right now"}</Text>
         <Text style={styles.deniedText}>
-          This video may have expired, or it needs a subscription to watch.
+          {deniedInfo
+            ? "Subscribe to unlock this and every story."
+            : "This video may have expired, or it needs a subscription to watch."}
         </Text>
         <Pressy style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
           <Text style={styles.subscribeLabel}>See subscription plans</Text>

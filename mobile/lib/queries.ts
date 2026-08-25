@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { AppContent, Section, SubscriptionPlan, Video } from "../types/database";
+import type { AppContent, Section, SubscriptionPlan, Video, VideoCatalogEntry } from "../types/database";
 
 export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   const { data, error } = await supabase
@@ -17,12 +17,15 @@ export async function getAppContent(key: string): Promise<AppContent | null> {
   return data;
 }
 
-export async function getTodaysVideo(): Promise<Video | null> {
+// Reads from videos_catalog, not videos directly — a non-subscriber must
+// still see today's featured story on the home screen (as a teaser that
+// leads to the paywall) rather than have it vanish because RLS blocks the
+// underlying row. See migration 0011_videos_catalog.sql.
+export async function getTodaysVideo(): Promise<VideoCatalogEntry | null> {
   const { data, error } = await supabase
-    .from("videos")
+    .from("videos_catalog")
     .select("*")
     .eq("is_daily_featured", true)
-    .eq("status", "live")
     .order("posted_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -36,12 +39,14 @@ export async function getSections(): Promise<Section[]> {
   return data ?? [];
 }
 
-export async function getVideosForSection(sectionId: string): Promise<Video[]> {
+// Same reasoning as getTodaysVideo above: this must show every live video
+// in the section, purchased or not, so pay-per-video content is browsable
+// (with its price visible) instead of silently absent from the list.
+export async function getVideosForSection(sectionId: string): Promise<VideoCatalogEntry[]> {
   const { data, error } = await supabase
-    .from("videos")
+    .from("videos_catalog")
     .select("*")
     .eq("section_id", sectionId)
-    .eq("status", "live")
     .order("posted_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -49,6 +54,16 @@ export async function getVideosForSection(sectionId: string): Promise<Video[]> {
 
 export async function getVideo(id: string): Promise<Video | null> {
   const { data, error } = await supabase.from("videos").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// Falls back to the browsing-only catalog entry when RLS has blocked the
+// full video row (viewer isn't entitled) — lets the denial screen explain
+// *why* ("subscribe to unlock" vs "pay-per-video isn't purchasable yet")
+// instead of a single generic "not available" message.
+export async function getVideoCatalogEntry(id: string): Promise<VideoCatalogEntry | null> {
+  const { data, error } = await supabase.from("videos_catalog").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return data;
 }

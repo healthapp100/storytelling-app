@@ -43,6 +43,25 @@ export type Video = {
   created_at: string;
 };
 
+// Mirrors supabase/migrations/0011_videos_catalog.sql — browsing metadata
+// for every live video, visible regardless of purchase/subscription
+// entitlement. Deliberately missing storage_key so it can't be used to
+// play a video the viewer hasn't unlocked.
+export type VideoCatalogEntry = {
+  id: string;
+  section_id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  posted_at: string;
+  expires_at: string;
+  is_daily_featured: boolean;
+  access_tier: AccessTier;
+  price_rupees: number | null;
+  status: VideoStatus;
+};
+
 export type SubscriptionPlan = {
   id: string;
   code: "daily" | "weekly" | "monthly";

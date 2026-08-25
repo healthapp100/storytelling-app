@@ -8,7 +8,7 @@ import { Pressy } from "../../components/Pressy";
 import { getVideosForSection } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
-import type { Video } from "../../types/database";
+import type { VideoCatalogEntry } from "../../types/database";
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "";
@@ -18,7 +18,7 @@ function formatDuration(seconds: number | null): string {
 
 export default function SectionDetail() {
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
-  const [videos, setVideos] = useState<Video[] | null>(null);
+  const [videos, setVideos] = useState<VideoCatalogEntry[] | null>(null);
   const [failed, setFailed] = useState(false);
 
   const load = useCallback(() => {
@@ -86,7 +86,7 @@ export default function SectionDetail() {
               </Text>
               <Text style={styles.rowMeta}>
                 {formatDuration(item.duration_seconds)}
-                {item.access_tier === "one_time" ? " · Pay per video" : ""}
+                {item.access_tier === "one_time" ? ` · ₹${item.price_rupees ?? 0} to unlock` : ""}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.accent} />

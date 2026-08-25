@@ -16,14 +16,14 @@ import { Pressy } from "../../components/Pressy";
 import { getAppContent, getTodaysVideo, storagePublicUrl } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
-import type { Video } from "../../types/database";
+import type { VideoCatalogEntry } from "../../types/database";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [introText, setIntroText] = useState("");
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
-  const [todaysVideo, setTodaysVideo] = useState<Video | null>(null);
+  const [todaysVideo, setTodaysVideo] = useState<VideoCatalogEntry | null>(null);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -103,7 +103,11 @@ export default function Home() {
               </View>
               <Text style={styles.todayTitle}>{todaysVideo.title}</Text>
               <View style={styles.todayCtaRow}>
-                <Text style={styles.todayCta}>Watch now</Text>
+                <Text style={styles.todayCta}>
+                  {todaysVideo.access_tier === "one_time"
+                    ? `₹${todaysVideo.price_rupees ?? 0} to unlock`
+                    : "Watch now"}
+                </Text>
                 <Ionicons name="arrow-forward" size={16} color={colors.accent} />
               </View>
             </ImageBackground>
