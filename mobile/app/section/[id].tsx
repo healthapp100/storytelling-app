@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { AppTextInput } from "../../components/AppTextInput";
 import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getVideosForSection } from "../../lib/queries";
@@ -20,10 +21,12 @@ export default function SectionDetail() {
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
   const [videos, setVideos] = useState<VideoCatalogEntry[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(() => {
     setFailed(false);
-    getVideosForSection(id)
+    return getVideosForSection(id)
       .then(setVideos)
       .catch(() => setFailed(true));
   }, [id]);
@@ -32,7 +35,20 @@ export default function SectionDetail() {
     load();
   }, [load]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
+
   useRealtimeTable("videos", load, `section_id=eq.${id}`);
+
+  const filteredVideos = useMemo(() => {
+    if (!videos) return videos;
+    const q = query.trim().toLowerCase();
+    if (!q) return videos;
+    return videos.filter((v) => v.title.toLowerCase().includes(q));
+  }, [videos, query]);
 
   if (failed) {
     return (
@@ -53,19 +69,30 @@ export default function SectionDetail() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
-        data={videos}
+        data={filteredVideos ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.eyebrow}>Section</Text>
             <Text style={styles.heading}>{title ?? "Videos"}</Text>
+            {videos && videos.length > 0 && (
+              <AppTextInput
+                style={styles.searchInput}
+                placeholder="Search this section"
+                value={query}
+                onChangeText={setQuery}
+              />
+            )}
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyCard}>
             <Ionicons name="film-outline" size={22} color={colors.inkFaint} />
-            <Text style={styles.empty}>No videos here yet — check back soon.</Text>
+            <Text style={styles.empty}>
+              {query.trim() ? "No videos match your search." : "No videos here yet — check back soon."}
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -111,6 +138,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heading: { fontFamily: fonts.display, fontSize: 28, color: colors.ink },
+  searchInput: {
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.ink,
+    backgroundColor: colors.paperRaised,
+  },
   emptyCard: {
     borderWidth: 1,
     borderColor: colors.border,

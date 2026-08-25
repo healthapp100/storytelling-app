@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   ImageBackground,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,17 +15,39 @@ import {
 } from "react-native";
 import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
-import { getAppContent, getTodaysVideo, storagePublicUrl } from "../../lib/queries";
+import { getAppContent, getTodaysVideo, getVideosByIds, storagePublicUrl } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
+import { getRecentWatchProgress, type WatchProgressEntry } from "../../lib/watchProgress";
 import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
 import type { VideoCatalogEntry } from "../../types/database";
 
+type ContinueWatchingItem = VideoCatalogEntry & { progressRatio: number };
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
   const [introText, setIntroText] = useState("");
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
   const [todaysVideo, setTodaysVideo] = useState<VideoCatalogEntry | null>(null);
+  const [continueWatching, setContinueWatching] = useState<ContinueWatchingItem[]>([]);
+
+  const loadContinueWatching = useCallback(async () => {
+    const entries = await getRecentWatchProgress();
+    if (entries.length === 0) {
+      setContinueWatching([]);
+      return;
+    }
+    const videos = await getVideosByIds(entries.map((e) => e.videoId));
+    const byId = new Map(entries.map((e) => [e.videoId, e]));
+    const merged = videos
+      .map((v) => {
+        const entry = byId.get(v.id) as WatchProgressEntry;
+        return { ...v, progressRatio: entry.position / entry.duration };
+      })
+      .sort((a, b) => (byId.get(b.id)?.updatedAt ?? 0) - (byId.get(a.id)?.updatedAt ?? 0));
+    setContinueWatching(merged);
+  }, []);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -32,6 +56,7 @@ export default function Home() {
         getAppContent("home_intro_text"),
         getAppContent("home_intro_video_key"),
         getTodaysVideo(),
+        loadContinueWatching(),
       ]);
       setIntroText((about?.value as string) ?? "");
       setIntroVideoUrl(introKey?.value ? storagePublicUrl(introKey.value as string) : null);
@@ -41,10 +66,25 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadContinueWatching]);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  // Progress made just now on the video screen wouldn't otherwise show up
+  // here until the next full load — refresh the Continue Watching row every
+  // time this tab regains focus (e.g. backing out of a video).
+  useFocusEffect(
+    useCallback(() => {
+      loadContinueWatching();
+    }, [loadContinueWatching])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
   }, [load]);
 
   // Live refresh: an admin publishing a new "today's video" or editing the
@@ -74,7 +114,10 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
         <View style={styles.headerRow}>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>Every day, a new story</Text>
@@ -116,6 +159,35 @@ export default function Home() {
           <View style={styles.emptyCard}>
             <Ionicons name="moon-outline" size={22} color={colors.inkFaint} />
             <Text style={styles.emptyText}>No story featured yet today — check back soon.</Text>
+          </View>
+        )}
+
+        {continueWatching.length > 0 && (
+          <View style={styles.continueWrap}>
+            <Text style={styles.sectionLabel}>Continue watching</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.continueRow}>
+              {continueWatching.map((item) => (
+                <Pressy
+                  key={item.id}
+                  style={styles.continueCard}
+                  onPress={() => router.push({ pathname: "/video/[id]", params: { id: item.id } })}
+                >
+                  {item.thumbnail_url ? (
+                    <Image source={{ uri: item.thumbnail_url }} style={styles.continueThumb} />
+                  ) : (
+                    <View style={[styles.continueThumb, styles.continueThumbPlaceholder]}>
+                      <Ionicons name="play" size={18} color={colors.accentInk} />
+                    </View>
+                  )}
+                  <View style={styles.continueProgressTrack}>
+                    <View style={[styles.continueProgressFill, { width: `${Math.round(item.progressRatio * 100)}%` }]} />
+                  </View>
+                  <Text style={styles.continueTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                </Pressy>
+              ))}
+            </ScrollView>
           </View>
         )}
 
@@ -186,6 +258,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   emptyText: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
+  continueWrap: { gap: spacing.sm },
+  continueRow: { gap: spacing.sm, paddingRight: spacing.lg },
+  continueCard: { width: 140, gap: 6 },
+  continueThumb: { width: 140, height: 84, borderRadius: radii.md, backgroundColor: colors.accentSoft },
+  continueThumbPlaceholder: { alignItems: "center", justifyContent: "center" },
+  continueProgressTrack: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: "hidden" },
+  continueProgressFill: { height: 3, backgroundColor: colors.accent },
+  continueTitle: { fontSize: 13, fontWeight: "600", color: colors.ink },
   introVideoWrap: { gap: spacing.sm },
   sectionLabel: { fontSize: 13, color: colors.inkMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6 },
   introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: radii.md, backgroundColor: colors.night },

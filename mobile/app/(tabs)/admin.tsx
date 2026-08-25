@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,6 +32,7 @@ const PLAN_LABELS: Record<SubscriptionPlan["code"], string> = {
 export default function AdminDashboard() {
   const { isAdmin, loading: sessionLoading } = useSession();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -65,6 +67,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
   }, [load]);
 
   const handlePickNewIcon = async () => {
@@ -167,7 +175,10 @@ export default function AdminDashboard() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
         <Text style={styles.eyebrow}>Manage</Text>
         <Text style={styles.heading}>Admin</Text>
 

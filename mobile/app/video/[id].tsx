@@ -1,12 +1,17 @@
 import { useVideoPlayer, VideoView } from "expo-video";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { getVideo, getVideoCatalogEntry, videoPlaybackUrl } from "../../lib/queries";
 import { useToast } from "../../lib/toast";
+import { clearWatchProgress, getWatchProgress, saveWatchProgress } from "../../lib/watchProgress";
 import { colors, fonts, radii, spacing } from "../../lib/theme";
 import type { Video, VideoCatalogEntry } from "../../types/database";
+
+// Don't bother resuming into the last few seconds — that's effectively
+// "finished" and resuming there just replays the ending.
+const RESUME_TAIL_SECONDS = 15;
 
 export default function VideoPlayer() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,6 +21,7 @@ export default function VideoPlayer() {
   // of one generic "not available" message for every case.
   const [deniedInfo, setDeniedInfo] = useState<VideoCatalogEntry | null | "unknown">("unknown");
   const { showToast } = useToast();
+  const resumedRef = useRef(false);
 
   useEffect(() => {
     getVideo(id)
@@ -34,17 +40,40 @@ export default function VideoPlayer() {
   const player = useVideoPlayer(
     video && video !== "denied" ? videoPlaybackUrl(video) : "",
     (p) => {
+      p.timeUpdateEventInterval = 5;
       p.play();
     }
   );
 
   useEffect(() => {
-    const subscription = player.addListener("playToEnd", () => {
+    const endSub = player.addListener("playToEnd", () => {
       showToast("Story complete — well told!", "celebrate");
+      if (video && video !== "denied") clearWatchProgress(video.id);
     });
-    return () => subscription.remove();
+
+    // Resumes once, the first time this video's duration is known — seeking
+    // any earlier just gets overwritten as soon as the real duration loads.
+    const loadSub = player.addListener("sourceLoad", async (payload) => {
+      if (resumedRef.current || !video || video === "denied") return;
+      resumedRef.current = true;
+      const saved = await getWatchProgress(video.id);
+      if (saved && saved.position < payload.duration - RESUME_TAIL_SECONDS) {
+        player.currentTime = saved.position;
+      }
+    });
+
+    const timeSub = player.addListener("timeUpdate", (payload) => {
+      if (!video || video === "denied" || !player.duration) return;
+      saveWatchProgress(video.id, payload.currentTime, player.duration);
+    });
+
+    return () => {
+      endSub.remove();
+      loadSub.remove();
+      timeSub.remove();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [player]);
+  }, [player, video]);
 
   if (video === null) {
     return (

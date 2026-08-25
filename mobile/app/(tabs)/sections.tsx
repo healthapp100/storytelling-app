@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../../components/ErrorState";
 import { Pressy } from "../../components/Pressy";
 import { getSections } from "../../lib/queries";
@@ -14,16 +14,23 @@ import type { Section } from "../../types/database";
 export default function Sections() {
   const [sections, setSections] = useState<Section[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(() => {
     setFailed(false);
-    getSections()
+    return getSections()
       .then(setSections)
       .catch(() => setFailed(true));
   }, []);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
   }, [load]);
 
   useRealtimeTable("sections", load);
@@ -50,6 +57,7 @@ export default function Sections() {
         data={sections}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.eyebrow}>Explore</Text>

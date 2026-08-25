@@ -68,6 +68,13 @@ export async function getVideoCatalogEntry(id: string): Promise<VideoCatalogEntr
   return data;
 }
 
+export async function getVideosByIds(ids: string[]): Promise<VideoCatalogEntry[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("videos_catalog").select("*").in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
 // RLS already blocks the row if the viewer isn't entitled, so a successful
 // fetch above is itself sufficient proof of access — no separate check needed.
 export function videoPlaybackUrl(video: Video): string {
