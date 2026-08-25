@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../components/ErrorState";
 import { Pressy } from "../components/Pressy";
 import { getSubscriptionPlans } from "../lib/queries";
@@ -47,10 +47,7 @@ export default function Subscribe() {
   useRealtimeTable("subscription_plans", load);
 
   const handlePurchase = async (plan: SubscriptionPlan) => {
-    if (!plan.revenuecat_product_id) {
-      Alert.alert("Not available yet", "This plan hasn't been connected to the store yet.");
-      return;
-    }
+    if (!plan.revenuecat_product_id) return;
     setPurchasingCode(plan.code);
     try {
       await purchasePackageByIdentifier(plan.revenuecat_product_id);
@@ -87,24 +84,36 @@ export default function Subscribe() {
           Subscribe to unlock every video in every section, for as long as your plan is active.
         </Text>
 
-        {plans.map((plan) => (
-          <Pressy
-            key={plan.id}
-            style={styles.planCard}
-            disabled={purchasingCode !== null}
-            onPress={() => handlePurchase(plan)}
-          >
-            <View style={styles.planText}>
-              <Text style={styles.planLabel}>{PLAN_LABELS[plan.code]}</Text>
-              <Text style={styles.planHint}>{PLAN_HINTS[plan.code]}</Text>
-            </View>
-            {purchasingCode === plan.code ? (
-              <ActivityIndicator color={colors.accent} />
-            ) : (
-              <Text style={styles.planPrice}>{formatPrice(plan.price_rupees)}</Text>
-            )}
-          </Pressy>
-        ))}
+        {plans.map((plan) => {
+          const comingSoon = !plan.revenuecat_product_id;
+          return (
+            <Pressy
+              key={plan.id}
+              style={[styles.planCard, comingSoon && styles.planCardDisabled]}
+              disabled={purchasingCode !== null || comingSoon}
+              onPress={() => handlePurchase(plan)}
+            >
+              <View style={styles.planText}>
+                <View style={styles.planLabelRow}>
+                  <Text style={styles.planLabel}>{PLAN_LABELS[plan.code]}</Text>
+                  {comingSoon && (
+                    <View style={styles.comingSoonBadge}>
+                      <Text style={styles.comingSoonLabel}>Coming soon</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.planHint}>{PLAN_HINTS[plan.code]}</Text>
+              </View>
+              {purchasingCode === plan.code ? (
+                <ActivityIndicator color={colors.accent} />
+              ) : (
+                <Text style={[styles.planPrice, comingSoon && styles.planPriceDisabled]}>
+                  {formatPrice(plan.price_rupees)}
+                </Text>
+              )}
+            </Pressy>
+          );
+        })}
 
         <Pressy
           style={styles.restoreButton}
@@ -139,10 +148,20 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...shadow.card,
   },
+  planCardDisabled: { opacity: 0.6 },
   planText: { gap: 2 },
+  planLabelRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
   planLabel: { fontSize: 17, fontWeight: "700", color: colors.ink },
   planHint: { fontSize: 13, color: colors.inkMuted },
   planPrice: { fontFamily: fonts.display, fontSize: 22, color: colors.accent },
+  planPriceDisabled: { color: colors.inkFaint },
+  comingSoonBadge: {
+    backgroundColor: colors.accentSoft,
+    borderRadius: radii.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  comingSoonLabel: { fontSize: 11, fontWeight: "700", color: colors.accentInk },
   restoreButton: { alignItems: "center", marginTop: spacing.sm, padding: spacing.sm },
   restoreLabel: { color: colors.inkMuted, fontSize: 14, fontWeight: "600" },
 });
