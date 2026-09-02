@@ -30,26 +30,37 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      setSession(data.session);
-      if (data.session) {
-        configurePurchases(data.session.user.id);
-        registerForDailyVideoNotifications(data.session.user.id);
-        setProfile(await fetchProfile(data.session.user.id));
-      }
-      setLoading(false);
-    });
+    // Wrapped in try/catch so a failure in any one step (e.g. RevenueCat
+    // native config throwing on a misconfigured key) can't leave loading
+    // stuck true forever and block the whole app behind a blank screen.
+    supabase
+      .auth.getSession()
+      .then(async ({ data }) => {
+        setSession(data.session);
+        if (data.session) {
+          configurePurchases(data.session.user.id);
+          registerForDailyVideoNotifications(data.session.user.id);
+          setProfile(await fetchProfile(data.session.user.id));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
 
     const { data: subscription } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       setSession(newSession);
-      if (event === "SIGNED_IN" && newSession) {
-        configurePurchases(newSession.user.id);
-        registerForDailyVideoNotifications(newSession.user.id);
-        setProfile(await fetchProfile(newSession.user.id));
-      }
-      if (event === "SIGNED_OUT") {
-        logOutPurchases();
-        setProfile(null);
+      try {
+        if (event === "SIGNED_IN" && newSession) {
+          configurePurchases(newSession.user.id);
+          registerForDailyVideoNotifications(newSession.user.id);
+          setProfile(await fetchProfile(newSession.user.id));
+        }
+        if (event === "SIGNED_OUT") {
+          logOutPurchases();
+          setProfile(null);
+        }
+      } catch {
+        // Best-effort side effects (push token registration, RevenueCat
+        // login) — a failure here shouldn't leave auth state changes unhandled.
       }
     });
 

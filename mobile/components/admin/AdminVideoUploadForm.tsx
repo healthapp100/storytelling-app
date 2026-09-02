@@ -48,7 +48,9 @@ export function AdminVideoUploadForm({ sectionId, onUploaded }: { sectionId: str
   const { showToast } = useToast();
 
   useEffect(() => {
-    getVideoPurchaseTiers().then(setTiers);
+    getVideoPurchaseTiers()
+      .then(setTiers)
+      .catch(() => setTiers([]));
   }, []);
 
   const pickFile = async () => {
