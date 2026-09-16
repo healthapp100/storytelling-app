@@ -3,6 +3,7 @@ import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,8 @@ import {
 import { CredentialForm } from "../../components/CredentialForm";
 import { signUp } from "../../lib/auth";
 import { colors, fonts, radii, spacing } from "../../lib/theme";
+
+const LEGAL_URL = process.env.EXPO_PUBLIC_LEGAL_URL;
 
 export default function SignUp() {
   return (
@@ -42,6 +45,20 @@ export default function SignUp() {
               router.replace("/(tabs)");
             }}
           />
+
+          {LEGAL_URL && (
+            <Text style={styles.legalText}>
+              By creating an account, you agree to our{" "}
+              <Text style={styles.legalLink} onPress={() => Linking.openURL(`${LEGAL_URL}/terms`)}>
+                Terms
+              </Text>{" "}
+              and{" "}
+              <Text style={styles.legalLink} onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)}>
+                Privacy Policy
+              </Text>
+              .
+            </Text>
+          )}
 
           <Link href="/(auth)/sign-in" style={styles.link}>
             <Text style={styles.linkText}>Already have an account? Sign in</Text>
@@ -77,4 +94,12 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15, color: colors.inkMuted, marginTop: 6, marginBottom: spacing.xl, lineHeight: 21 },
   link: { marginTop: spacing.xl, alignSelf: "center" },
   linkText: { color: colors.inkMuted, fontSize: 14, fontWeight: "600" },
+  legalText: {
+    marginTop: spacing.lg,
+    fontSize: 12.5,
+    color: colors.inkMuted,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  legalLink: { color: colors.accentInk, fontWeight: "700", textDecorationLine: "underline" },
 });

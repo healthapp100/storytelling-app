@@ -26,8 +26,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname.startsWith("/login");
-  if (!user && !isLoginPage) {
+  // Legal pages must be reachable by anyone — the app store listing and the
+  // app's own sign-up screen link straight to them, long before a visitor
+  // ever has an account.
+  const isPublicPage =
+    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname.startsWith("/privacy") ||
+    request.nextUrl.pathname.startsWith("/terms");
+  if (!user && !isPublicPage) {
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }

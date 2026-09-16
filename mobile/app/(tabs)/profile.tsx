@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { Pressy } from "../../components/Pressy";
 import { signOut } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
@@ -15,6 +15,8 @@ function initialFor(name: string | null, fallback: string): string {
   const source = name?.trim() || fallback;
   return source.charAt(0).toUpperCase() || "?";
 }
+
+const LEGAL_URL = process.env.EXPO_PUBLIC_LEGAL_URL;
 
 export default function ProfileScreen() {
   const { session, isAdmin } = useSession();
@@ -69,6 +71,18 @@ export default function ProfileScreen() {
             <Ionicons name="log-out-outline" size={17} color={colors.ink} />
             <Text style={styles.signOutLabel}>Sign out</Text>
           </Pressy>
+
+          {LEGAL_URL && (
+            <View style={styles.legalRow}>
+              <Text style={styles.legalLink} onPress={() => Linking.openURL(`${LEGAL_URL}/terms`)}>
+                Terms of Service
+              </Text>
+              <Text style={styles.legalDivider}>·</Text>
+              <Text style={styles.legalLink} onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)}>
+                Privacy Policy
+              </Text>
+            </View>
+          )}
 
           {__DEV__ && (
             <Pressy
@@ -152,4 +166,13 @@ const styles = StyleSheet.create({
   signOutLabel: { fontWeight: "600", color: colors.ink },
   debugButton: { alignItems: "center", padding: spacing.sm },
   debugLabel: { color: colors.inkFaint, fontSize: 12 },
+  legalRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: spacing.sm,
+  },
+  legalLink: { color: colors.inkMuted, fontSize: 13, fontWeight: "600", textDecorationLine: "underline" },
+  legalDivider: { color: colors.inkFaint, fontSize: 13 },
 });
