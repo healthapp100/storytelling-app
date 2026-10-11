@@ -3,7 +3,7 @@
     "name": "Storytelling App",
     "slug": "health",
     "scheme": "storytellingapp",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     "android": {
       "package": "com.storytellingapp.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#16302D",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -38,11 +38,19 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png"
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#16302D"
         }
       ],
       "expo-font",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#16302D",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "extra": {

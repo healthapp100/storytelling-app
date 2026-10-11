@@ -1,22 +1,33 @@
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
-import { Linking, StyleSheet, Text, View } from "react-native";
-import { Pressy } from "../../components/Pressy";
+import { useEffect, useState, type ReactNode } from "react";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FadeIn } from "../../components/FadeIn";
+import { PageHeading } from "../../components/PageHeading";
 import { signOut } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import { Sentry } from "../../lib/sentry";
 import { useSession } from "../../lib/session";
-import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
+import { colors, fonts, spacing } from "../../lib/theme";
 import type { Profile } from "../../types/database";
 
-function initialFor(name: string | null, fallback: string): string {
-  const source = name?.trim() || fallback;
-  return source.charAt(0).toUpperCase() || "?";
-}
-
 const LEGAL_URL = process.env.EXPO_PUBLIC_LEGAL_URL;
+
+function Row({ label, hint, onPress, danger }: { label: string; hint?: string; onPress: () => void; danger?: boolean }): ReactNode {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+    >
+      <View style={styles.rowText}>
+        <Text style={[styles.rowLabel, danger && { color: colors.danger }]}>{label}</Text>
+        {hint ? <Text style={styles.rowHint}>{hint}</Text> : null}
+      </View>
+      <Text style={styles.rowArrow}>→</Text>
+    </Pressable>
+  );
+}
 
 export default function ProfileScreen() {
   const { session, isAdmin } = useSession();
@@ -36,143 +47,59 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <View style={styles.container}>
-        <Text style={styles.eyebrow}>Your account</Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        <FadeIn>
+          <PageHeading title={profile?.display_name || "Your account"} subtitle={identifier || undefined} />
+          {isAdmin ? <Text style={styles.adminNote}>You are signed in as an administrator.</Text> : null}
+        </FadeIn>
 
-        <View style={styles.identityCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarLabel}>{initialFor(profile?.display_name ?? null, identifier)}</Text>
-          </View>
-          <View style={styles.identityText}>
-            <Text style={styles.name}>{profile?.display_name || "Your account"}</Text>
-            <Text style={styles.identifier}>{identifier}</Text>
-          </View>
-          {isAdmin && (
-            <View style={styles.adminBadge}>
-              <Ionicons name="shield-checkmark" size={12} color={colors.accentInk} />
-              <Text style={styles.adminBadgeLabel}>Admin</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.actions}>
-          <Pressy style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
-            <Ionicons name="star" size={17} color="#fff" />
-            <Text style={styles.subscribeLabel}>Manage subscription</Text>
-          </Pressy>
-
-          <Pressy
-            style={styles.signOutButton}
-            onPress={async () => {
-              await signOut();
-              router.replace("/(auth)/sign-in");
-            }}
-          >
-            <Ionicons name="log-out-outline" size={17} color={colors.ink} />
-            <Text style={styles.signOutLabel}>Sign out</Text>
-          </Pressy>
-
-          {LEGAL_URL && (
-            <View style={styles.legalRow}>
-              <Text style={styles.legalLink} onPress={() => Linking.openURL(`${LEGAL_URL}/terms`)}>
-                Terms of Service
-              </Text>
-              <Text style={styles.legalDivider}>·</Text>
-              <Text style={styles.legalLink} onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)}>
-                Privacy Policy
-              </Text>
-            </View>
-          )}
-
-          {__DEV__ && (
-            <Pressy
-              style={styles.debugButton}
-              onPress={() => {
-                Sentry.captureException(new Error("Test error from Profile screen"));
+        <FadeIn delay={100}>
+          <View style={styles.list}>
+            <Row label="Plans & subscription" hint="Choose or manage how you watch" onPress={() => router.push("/subscribe")} />
+            {LEGAL_URL ? (
+              <>
+                <Row label="Terms of Service" onPress={() => Linking.openURL(`${LEGAL_URL}/terms`)} />
+                <Row label="Privacy Policy" onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)} />
+              </>
+            ) : null}
+            <Row
+              label="Sign out"
+              danger
+              onPress={async () => {
+                await signOut();
+                router.replace("/(auth)/sign-in");
               }}
-            >
-              <Text style={styles.debugLabel}>Send test error to Sentry (dev only)</Text>
-            </Pressy>
-          )}
-        </View>
-      </View>
+            />
+            {__DEV__ ? (
+              <Row
+                label="Send a test error to Sentry"
+                hint="Development builds only"
+                onPress={() => Sentry.captureException(new Error("Test error from Profile screen"))}
+              />
+            ) : null}
+          </View>
+        </FadeIn>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
-  container: { flex: 1, padding: spacing.lg, gap: spacing.lg },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-  },
-  identityCard: {
+  container: { padding: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  adminNote: { fontSize: 14, color: colors.accent, fontWeight: "600", marginBottom: spacing.md, marginTop: -spacing.sm },
+  list: { borderTopWidth: 1, borderTopColor: colors.border },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-    backgroundColor: colors.paperRaised,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    ...shadow.card,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarLabel: { fontFamily: fonts.display, fontSize: 22, color: colors.accentInk },
-  identityText: { flex: 1, gap: 2 },
-  name: { fontFamily: fonts.display, fontSize: 20, color: colors.ink },
-  identifier: { fontSize: 14, color: colors.inkMuted },
-  adminBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: colors.accentSoft,
-    borderRadius: radii.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  adminBadgeLabel: { fontSize: 11, fontWeight: "700", color: colors.accentInk },
-  actions: { gap: spacing.sm, marginTop: spacing.md },
-  subscribeButton: {
-    flexDirection: "row",
-    gap: 8,
-    backgroundColor: colors.night,
-    borderRadius: radii.md,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  subscribeLabel: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  signOutButton: {
-    flexDirection: "row",
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.paperRaised,
-  },
-  signOutLabel: { fontWeight: "600", color: colors.ink },
-  debugButton: { alignItems: "center", padding: spacing.sm },
-  debugLabel: { color: colors.inkFaint, fontSize: 12 },
-  legalRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    marginTop: spacing.sm,
-  },
-  legalLink: { color: colors.inkMuted, fontSize: 13, fontWeight: "600", textDecorationLine: "underline" },
-  legalDivider: { color: colors.inkFaint, fontSize: 13 },
+  rowPressed: { backgroundColor: colors.accentSoft },
+  rowText: { flex: 1, gap: 2 },
+  rowLabel: { fontFamily: fonts.displayMedium, fontSize: 20, color: colors.ink },
+  rowHint: { fontSize: 13.5, color: colors.inkMuted },
+  rowArrow: { fontSize: 18, color: colors.inkFaint },
 });

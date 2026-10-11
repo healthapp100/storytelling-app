@@ -75,7 +75,7 @@ export function EditSectionForm({ section }: { section: Section }) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-ink disabled:opacity-60"
+            className="rounded-md bg-night px-3 py-2 text-sm font-medium text-cream transition-all duration-150 hover:bg-night-raised active:scale-[0.98] disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save"}
           </button>

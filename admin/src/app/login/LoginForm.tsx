@@ -34,24 +34,21 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-paper-raised p-8 shadow-sm"
+      className="w-full max-w-sm space-y-8"
     >
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Welcome back</p>
-        <h1 className="mt-1 font-display text-2xl text-ink">Admin sign in</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          Use an account already promoted to <code className="rounded bg-accent-soft px-1 py-0.5 text-accent-ink">admin</code> in Supabase.
-        </p>
+        <h1 className="font-display text-4xl leading-tight text-ink">Welcome back.</h1>
+        <p className="mt-3 text-sm text-ink-muted">Administrators only. Sign in to manage stories, pricing and the home page.</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-5">
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full rounded-lg border border-border bg-paper-raised px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none"
+          className="w-full border-0 border-b-[1.5px] border-rule bg-transparent px-0 py-3 text-base text-ink placeholder:text-ink-faint transition-colors focus:border-ink focus:outline-none"
         />
         <input
           type="password"
@@ -59,12 +56,12 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full rounded-lg border border-border bg-paper-raised px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none"
+          className="w-full border-0 border-b-[1.5px] border-rule bg-transparent px-0 py-3 text-base text-ink placeholder:text-ink-faint transition-colors focus:border-ink focus:outline-none"
         />
       </div>
 
       {error && (
-        <p className="rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p className="border-l-[3px] border-danger pl-3 text-sm text-danger">
           {error}
         </p>
       )}
@@ -72,7 +69,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink disabled:opacity-60"
+        className="w-full rounded-md bg-night py-3.5 font-display text-xl text-cream transition-all duration-150 hover:bg-night-raised active:scale-[0.99] disabled:opacity-60"
       >
         {submitting ? "Signing in…" : "Sign in"}
       </button>

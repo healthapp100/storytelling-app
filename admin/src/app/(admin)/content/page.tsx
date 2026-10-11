@@ -17,8 +17,7 @@ export default async function ContentPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Home screen</p>
-        <h1 className="mt-1 font-display text-3xl text-ink">Home content</h1>
+        <h1 className="font-display text-3xl text-ink">Home content</h1>
         <p className="mt-2 text-sm text-ink-muted">
           What every user sees on the home screen before anything else.
         </p>
@@ -37,7 +36,7 @@ export default async function ContentPage() {
         />
         <button
           type="submit"
-          className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+          className="rounded-md bg-night px-4 py-2.5 text-sm font-medium text-cream transition-all duration-150 hover:bg-night-raised active:scale-[0.98]"
         >
           Save
         </button>

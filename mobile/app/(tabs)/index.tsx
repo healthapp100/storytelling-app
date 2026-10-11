@@ -1,29 +1,30 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  ImageBackground,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../../components/ErrorState";
+import { FadeIn } from "../../components/FadeIn";
+import { PageHeading } from "../../components/PageHeading";
 import { Pressy } from "../../components/Pressy";
 import { getAppContent, getTodaysVideo, getVideosByIds, storagePublicUrl } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
+import { useSession } from "../../lib/session";
 import { getRecentWatchProgress, type WatchProgressEntry } from "../../lib/watchProgress";
-import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
+import { colors, fonts, radii, spacing } from "../../lib/theme";
 import type { VideoCatalogEntry } from "../../types/database";
 
 type ContinueWatchingItem = VideoCatalogEntry & { progressRatio: number };
 
+function greetingFor(date: Date): string {
+  const hour = date.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function Home() {
+  const { profile } = useSession();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -112,59 +113,57 @@ export default function Home() {
     );
   }
 
+  const now = new Date();
+  const firstName = profile?.display_name?.trim().split(/\s+/)[0];
+  const dateLine = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
-        <View style={styles.headerRow}>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>Every day, a new story</Text>
-            <Text style={styles.heading}>Storytelling</Text>
-          </View>
-          <View style={styles.brandMark}>
-            <Ionicons name="flame" size={20} color={colors.accent} />
-          </View>
-        </View>
-        {introText ? <Text style={styles.intro}>{introText}</Text> : null}
+        <FadeIn>
+          <Text style={styles.dateLine}>{dateLine}</Text>
+          <PageHeading title={firstName ? `${greetingFor(now)},\n${firstName}.` : `${greetingFor(now)}.`} />
+        </FadeIn>
 
-        {todaysVideo ? (
-          <Pressy
-            style={styles.todayCardWrap}
-            onPress={() => router.push({ pathname: "/video/[id]", params: { id: todaysVideo.id } })}
-          >
-            <ImageBackground
-              source={todaysVideo.thumbnail_url ? { uri: todaysVideo.thumbnail_url } : undefined}
-              style={styles.todayCard}
-              imageStyle={styles.todayCardImage}
+        {introText ? (
+          <FadeIn delay={80}>
+            <Text style={styles.intro}>{introText}</Text>
+          </FadeIn>
+        ) : null}
+
+        <FadeIn delay={160}>
+          {todaysVideo ? (
+            <Pressy
+              scaleTo={0.985}
+              onPress={() => router.push({ pathname: "/video/[id]", params: { id: todaysVideo.id } })}
             >
-              {todaysVideo.thumbnail_url && <View style={styles.todayCardScrim} />}
-              <View style={styles.todayLabelRow}>
-                <Ionicons name="sparkles" size={13} color={colors.accentSoft} />
-                <Text style={styles.todayLabel}>Today&apos;s story</Text>
-              </View>
-              <Text style={styles.todayTitle}>{todaysVideo.title}</Text>
-              <View style={styles.todayCtaRow}>
-                <Text style={styles.todayCta}>
+              {todaysVideo.thumbnail_url ? (
+                <Image source={{ uri: todaysVideo.thumbnail_url }} style={styles.todayImage} />
+              ) : null}
+              <View style={[styles.plate, !todaysVideo.thumbnail_url && styles.plateAlone]}>
+                <Text style={styles.plateLabel}>Today&apos;s story</Text>
+                <Text style={styles.plateTitle}>{todaysVideo.title}</Text>
+                <Text style={styles.plateCta}>
                   {todaysVideo.access_tier === "one_time"
-                    ? `₹${todaysVideo.price_rupees ?? 0} to unlock`
-                    : "Watch now"}
+                    ? `₹${todaysVideo.price_rupees ?? 0} to unlock  →`
+                    : "Watch now  →"}
                 </Text>
-                <Ionicons name="arrow-forward" size={16} color={colors.accent} />
               </View>
-            </ImageBackground>
-          </Pressy>
-        ) : (
-          <View style={styles.emptyCard}>
-            <Ionicons name="moon-outline" size={22} color={colors.inkFaint} />
-            <Text style={styles.emptyText}>No story featured yet today — check back soon.</Text>
-          </View>
-        )}
+            </Pressy>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>Nothing featured today.</Text>
+              <Text style={styles.emptyText}>A new story will appear here as soon as it&apos;s published.</Text>
+            </View>
+          )}
+        </FadeIn>
 
         {continueWatching.length > 0 && (
-          <View style={styles.continueWrap}>
-            <Text style={styles.sectionLabel}>Continue watching</Text>
+          <FadeIn delay={240} style={styles.block}>
+            <Text style={styles.blockTitle}>Pick up where you left off</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.continueRow}>
               {continueWatching.map((item) => (
                 <Pressy
@@ -175,12 +174,10 @@ export default function Home() {
                   {item.thumbnail_url ? (
                     <Image source={{ uri: item.thumbnail_url }} style={styles.continueThumb} />
                   ) : (
-                    <View style={[styles.continueThumb, styles.continueThumbPlaceholder]}>
-                      <Ionicons name="play" size={18} color={colors.accentInk} />
-                    </View>
+                    <View style={[styles.continueThumb, styles.continueThumbBlank]} />
                   )}
-                  <View style={styles.continueProgressTrack}>
-                    <View style={[styles.continueProgressFill, { width: `${Math.round(item.progressRatio * 100)}%` }]} />
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${Math.round(item.progressRatio * 100)}%` }]} />
                   </View>
                   <Text style={styles.continueTitle} numberOfLines={2}>
                     {item.title}
@@ -188,14 +185,14 @@ export default function Home() {
                 </Pressy>
               ))}
             </ScrollView>
-          </View>
+          </FadeIn>
         )}
 
         {introVideoUrl && (
-          <View style={styles.introVideoWrap}>
-            <Text style={styles.sectionLabel}>About this app</Text>
+          <FadeIn delay={320} style={styles.block}>
+            <Text style={styles.blockTitle}>About this app</Text>
             <VideoView style={styles.introVideo} player={introPlayer} contentFit="cover" />
-          </View>
+          </FadeIn>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -205,68 +202,39 @@ export default function Home() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
-  container: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
-  flex1: { flex: 1 },
-  headerRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
-  brandMark: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
+  container: { padding: spacing.lg, gap: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  dateLine: { fontSize: 14, color: colors.inkMuted, marginBottom: 6 },
+  intro: {
+    fontSize: 16,
+    lineHeight: 25,
+    color: colors.ink,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.accent,
+    paddingLeft: spacing.md,
   },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  heading: { fontFamily: fonts.display, fontSize: 34, color: colors.ink },
-  intro: { fontSize: 15.5, color: colors.inkMuted, lineHeight: 23 },
-  todayCardWrap: { borderRadius: radii.lg, ...shadow.card },
-  todayCard: {
+  todayImage: { width: "100%", aspectRatio: 16 / 10, borderTopLeftRadius: radii.md, borderTopRightRadius: radii.md, backgroundColor: colors.border },
+  plate: {
     backgroundColor: colors.night,
-    borderRadius: radii.lg,
     padding: spacing.lg,
-    gap: spacing.xs,
-    overflow: "hidden",
+    gap: 6,
+    borderBottomLeftRadius: radii.md,
+    borderBottomRightRadius: radii.md,
   },
-  todayCardImage: { borderRadius: radii.lg },
-  todayCardScrim: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(33, 27, 54, 0.72)",
-  },
-  todayLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  todayLabel: { color: colors.accentSoft, fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: "700" },
-  todayTitle: { color: "#fff", fontFamily: fonts.display, fontSize: 22, marginTop: 2 },
-  todayCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.md },
-  todayCta: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  emptyCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    borderStyle: "dashed",
-    padding: spacing.lg,
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  emptyText: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
-  continueWrap: { gap: spacing.sm },
-  continueRow: { gap: spacing.sm, paddingRight: spacing.lg },
-  continueCard: { width: 140, gap: 6 },
-  continueThumb: { width: 140, height: 84, borderRadius: radii.md, backgroundColor: colors.accentSoft },
-  continueThumbPlaceholder: { alignItems: "center", justifyContent: "center" },
-  continueProgressTrack: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: "hidden" },
-  continueProgressFill: { height: 3, backgroundColor: colors.accent },
-  continueTitle: { fontSize: 13, fontWeight: "600", color: colors.ink },
-  introVideoWrap: { gap: spacing.sm },
-  sectionLabel: { fontSize: 13, color: colors.inkMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6 },
-  introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: radii.md, backgroundColor: colors.night },
+  plateAlone: { borderRadius: radii.md, paddingVertical: spacing.xl },
+  plateLabel: { color: colors.accentSoft, fontSize: 13, opacity: 0.85 },
+  plateTitle: { color: colors.cream, fontFamily: fonts.display, fontSize: 27, lineHeight: 32 },
+  plateCta: { color: colors.accentSoft, fontSize: 15, fontWeight: "600", marginTop: spacing.sm },
+  empty: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: spacing.lg, gap: 4 },
+  emptyTitle: { fontFamily: fonts.displayMedium, fontSize: 20, color: colors.ink },
+  emptyText: { fontSize: 14.5, lineHeight: 21, color: colors.inkMuted },
+  block: { gap: spacing.md, marginTop: spacing.sm },
+  blockTitle: { fontFamily: fonts.displayMedium, fontSize: 22, color: colors.ink },
+  continueRow: { gap: spacing.md, paddingRight: spacing.lg },
+  continueCard: { width: 152, gap: 6 },
+  continueThumb: { width: 152, height: 96, borderRadius: radii.sm, backgroundColor: colors.border },
+  continueThumbBlank: { backgroundColor: colors.nightRaised },
+  progressTrack: { height: 3, backgroundColor: colors.border },
+  progressFill: { height: 3, backgroundColor: colors.accent },
+  continueTitle: { fontSize: 14, lineHeight: 19, fontWeight: "600", color: colors.ink },
+  introVideo: { width: "100%", aspectRatio: 16 / 9, borderRadius: radii.sm, backgroundColor: colors.night },
 });

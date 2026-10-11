@@ -167,7 +167,7 @@ export function VideoUploadForm({ sectionId, tiers }: { sectionId: string; tiers
       <button
         type="submit"
         disabled={busy}
-        className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink disabled:opacity-60"
+        className="rounded-md bg-night px-4 py-2.5 text-sm font-medium text-cream transition-all duration-150 hover:bg-night-raised active:scale-[0.98] disabled:opacity-60"
       >
         {busy ? "Uploading…" : "Upload video"}
       </button>

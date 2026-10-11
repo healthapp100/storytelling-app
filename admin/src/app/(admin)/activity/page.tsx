@@ -23,14 +23,13 @@ export default async function ActivityPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Audit trail</p>
-        <h1 className="mt-1 font-display text-3xl text-ink">Activity log</h1>
+        <h1 className="font-display text-3xl text-ink">Activity log</h1>
         <p className="mt-2 text-sm text-ink-muted">Last 200 admin actions, most recent first.</p>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-paper-raised">
         <table className="w-full text-sm">
-          <thead className="bg-paper text-left text-xs uppercase tracking-wide text-ink-muted">
+          <thead className="bg-paper text-left text-sm text-ink-muted">
             <tr>
               <th className="px-4 py-3">When</th>
               <th className="px-4 py-3">Admin</th>

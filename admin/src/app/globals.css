@@ -1,27 +1,91 @@
 @import "tailwindcss";
 
-/* Same warm, editorial palette as the mobile app (see mobile/lib/theme.ts)
-   so the admin panel and the app read as one product, not two. */
+/* Same manuscript palette as the mobile app (mobile/lib/theme.ts): khadi
+   paper, soot ink, vermilion mark, peacock-green dark surfaces. Nothing is
+   pure white and corners are nearly square — cut paper, not soft bubbles. */
 @theme {
-  --color-paper: #fbf7f0;
-  --color-paper-raised: #ffffff;
-  --color-ink: #241f18;
-  --color-ink-muted: #6b6153;
-  --color-ink-faint: #9c9384;
-  --color-border: #e7dfd1;
-  --color-accent: #b5551e;
-  --color-accent-soft: #f3e4d6;
-  --color-accent-ink: #5c2a0e;
-  --color-success: #3f6b4a;
-  --color-success-soft: #e5efe6;
-  --color-danger: #b23a2e;
-  --color-danger-soft: #f8e6e1;
+  --color-paper: #f0e9d6;
+  --color-paper-raised: #f8f3e4;
+  --color-ink: #1a1510;
+  --color-ink-muted: #5e5546;
+  --color-ink-faint: #948a78;
+  --color-border: #d9cfb4;
+  --color-rule: #bfb293;
+  --color-night: #16302d;
+  --color-night-raised: #1f423e;
+  --color-cream: #f6efdb;
+  --color-accent: #b93a1e;
+  --color-accent-soft: #f1dfa0;
+  --color-accent-ink: #5e3f00;
+  --color-success: #2f6a43;
+  --color-success-soft: #dde8d2;
+  --color-danger: #8b1e2b;
+  --color-danger-soft: #f1d6d2;
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-eczar);
 }
 
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+/* One consistent, visible keyboard focus treatment instead of each browser's
+   default blue ring. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Page titles are inked above a ruled line with a short vermilion stroke at
+   its left end — the same heading treatment as the mobile app. */
+h1.font-display {
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.25rem;
+  background:
+    linear-gradient(var(--color-accent), var(--color-accent)) left bottom / 40px 3px no-repeat,
+    linear-gradient(var(--color-rule), var(--color-rule)) left bottom / 100% 1px no-repeat;
+}
+
+/* Content settles into place on every navigation. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main {
+  animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Lists and tables read as ruled pages: rows tint on hover. */
+tbody tr,
+ul.divide-y > li {
+  transition: background-color 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }

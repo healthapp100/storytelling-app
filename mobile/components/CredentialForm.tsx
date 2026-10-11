@@ -1,10 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { Pressy } from "./Pressy";
-import { TextButton } from "./TextButton";
 import type { Credential } from "../lib/auth";
-import { colors, radii, spacing } from "../lib/theme";
+import { colors, fonts, radii, spacing } from "../lib/theme";
 
 type Method = "email" | "phone";
 
@@ -14,12 +12,27 @@ type Props = {
   onSubmit: (credential: Credential, displayName: string) => Promise<void>;
 };
 
-// Explicit text/placeholder colors below aren't cosmetic — without them,
-// some Android OEM skins render TextInput's default text color as very
-// light grey/white regardless of the app's theme, making typed text and
-// placeholders unreadable on this screen's white background.
-const TEXT_COLOR = colors.ink;
-const PLACEHOLDER_COLOR = colors.inkFaint;
+// Explicit text/placeholder colors aren't cosmetic — some Android OEM skins
+// render TextInput's default text color as very light grey regardless of the
+// app's theme, making typed text and placeholders unreadable.
+function Field({ label, trailing, ...input }: TextInputProps & { label: string; trailing?: React.ReactNode }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={[styles.inputRow, focused && styles.inputRowFocused]}>
+        <TextInput
+          {...input}
+          style={styles.input}
+          placeholderTextColor={colors.inkFaint}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+        {trailing}
+      </View>
+    </View>
+  );
+}
 
 export function CredentialForm({ submitLabel, showNameField, onSubmit }: Props) {
   const [method, setMethod] = useState<Method>("email");
@@ -48,175 +61,103 @@ export function CredentialForm({ submitLabel, showNameField, onSubmit }: Props) 
 
   return (
     <View style={styles.container}>
-      <View style={styles.methodSwitch}>
-        <Pressy
-          style={[styles.methodButton, method === "email" && styles.methodButtonActive]}
-          onPress={() => setMethod("email")}
-          scaleTo={0.98}
-        >
-          <Ionicons
-            name="mail-outline"
-            size={15}
-            color={method === "email" ? colors.accentInk : colors.accentInk}
-            style={{ opacity: method === "email" ? 1 : 0.6 }}
-          />
-          <Text style={[styles.methodLabel, method === "email" && styles.methodLabelActive]}>
-            Email
-          </Text>
-        </Pressy>
-        <Pressy
-          style={[styles.methodButton, method === "phone" && styles.methodButtonActive]}
-          onPress={() => setMethod("phone")}
-          scaleTo={0.98}
-        >
-          <Ionicons
-            name="call-outline"
-            size={15}
-            color={colors.accentInk}
-            style={{ opacity: method === "phone" ? 1 : 0.6 }}
-          />
-          <Text style={[styles.methodLabel, method === "phone" && styles.methodLabelActive]}>
-            Phone
-          </Text>
-        </Pressy>
+      <View style={styles.methods}>
+        {(["email", "phone"] as const).map((option) => (
+          <Pressable
+            key={option}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: method === option }}
+            onPress={() => setMethod(option)}
+            style={[styles.method, method === option && styles.methodActive]}
+          >
+            <Text style={[styles.methodLabel, method === option && styles.methodLabelActive]}>
+              {option === "email" ? "Email" : "Phone"}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
       {showNameField && (
-        <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Your full name"
-            placeholderTextColor={PLACEHOLDER_COLOR}
-            value={displayName}
-            onChangeText={setDisplayName}
-            autoComplete="name"
-            textContentType="name"
-          />
-        </View>
+        <Field
+          label="Your name"
+          placeholder="As you'd like us to greet you"
+          value={displayName}
+          onChangeText={setDisplayName}
+          autoComplete="name"
+          textContentType="name"
+        />
       )}
 
-      <View style={styles.field}>
-        <Text style={styles.fieldLabel}>{method === "email" ? "Email" : "Phone number"}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={method === "email" ? "you@example.com" : "e.g. +1 555 123 4567"}
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={identifier}
-          onChangeText={setIdentifier}
-          keyboardType={method === "email" ? "email-address" : "phone-pad"}
-          autoCapitalize="none"
-          autoComplete="username"
-          textContentType="username"
-        />
-      </View>
+      <Field
+        label={method === "email" ? "Email address" : "Phone number"}
+        placeholder={method === "email" ? "you@example.com" : "+91 98765 43210"}
+        value={identifier}
+        onChangeText={setIdentifier}
+        keyboardType={method === "email" ? "email-address" : "phone-pad"}
+        autoCapitalize="none"
+        autoComplete="username"
+        textContentType="username"
+      />
 
-      <View style={styles.field}>
-        <Text style={styles.fieldLabel}>Password</Text>
-        <View style={styles.passwordRow}>
-          <TextInput
-            style={[styles.input, styles.passwordInput]}
-            placeholder="At least 6 characters"
-            placeholderTextColor={PLACEHOLDER_COLOR}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!passwordVisible}
-            autoComplete="password"
-            textContentType="password"
-          />
-          <TextButton
-            style={styles.passwordToggleLabel}
-            onPress={() => setPasswordVisible((visible) => !visible)}
-          >
-            {passwordVisible ? "Hide" : "Show"}
-          </TextButton>
-        </View>
-      </View>
+      <Field
+        label="Password"
+        placeholder="At least 6 characters"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry={!passwordVisible}
+        autoComplete="password"
+        textContentType="password"
+        trailing={
+          <Pressable onPress={() => setPasswordVisible((visible) => !visible)} hitSlop={10}>
+            <Text style={styles.toggle}>{passwordVisible ? "Hide" : "Show"}</Text>
+          </Pressable>
+        }
+      />
 
       {errorMessage && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.error}>{errorMessage}</Text>
+        <View style={styles.error} accessibilityLiveRegion="polite">
+          <Text style={styles.errorText}>{errorMessage}</Text>
         </View>
       )}
 
       <Pressy
-        style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+        style={[styles.submit, submitting && styles.submitDisabled]}
         onPress={handleSubmit}
         disabled={submitting}
       >
-        {submitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitLabel}>{submitLabel}</Text>
-        )}
+        {submitting ? <ActivityIndicator color={colors.cream} /> : <Text style={styles.submitLabel}>{submitLabel}</Text>}
       </Pressy>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.md + 4 },
-  methodSwitch: {
+  container: { gap: spacing.lg },
+  methods: { flexDirection: "row", gap: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border },
+  method: { paddingBottom: 10, marginBottom: -1, borderBottomWidth: 3, borderBottomColor: "transparent" },
+  methodActive: { borderBottomColor: colors.accent },
+  methodLabel: { fontFamily: fonts.displayMedium, fontSize: 18, color: colors.inkFaint },
+  methodLabelActive: { color: colors.ink },
+  field: { gap: 4 },
+  fieldLabel: { fontSize: 13.5, color: colors.inkMuted },
+  inputRow: {
     flexDirection: "row",
-    backgroundColor: colors.accentSoft,
-    borderRadius: radii.md,
-    padding: 4,
-  },
-  methodButton: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: radii.md - 3,
     alignItems: "center",
-    justifyContent: "center",
+    borderBottomWidth: 1.5,
+    borderBottomColor: colors.rule,
   },
-  methodButtonActive: {
-    backgroundColor: colors.paperRaised,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  methodLabel: { color: colors.accentInk, fontWeight: "600", fontSize: 14, opacity: 0.6 },
-  methodLabelActive: { color: colors.accentInk, opacity: 1 },
-  field: { gap: 6 },
-  fieldLabel: { fontSize: 13, fontWeight: "600", color: colors.inkMuted },
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: 16,
-    color: TEXT_COLOR,
-    backgroundColor: colors.paperRaised,
-  },
-  passwordRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  passwordInput: { flex: 1 },
-  passwordToggleLabel: {
-    color: colors.inkMuted,
-    fontWeight: "600",
-    fontSize: 13,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  errorBanner: {
-    backgroundColor: colors.dangerSoft,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: radii.sm + 2,
-    padding: 10,
-  },
-  error: { color: colors.danger, fontSize: 14 },
-  submitButton: {
+  inputRowFocused: { borderBottomColor: colors.ink },
+  input: { flex: 1, fontSize: 17, paddingVertical: 11, color: colors.ink },
+  toggle: { fontSize: 14, fontWeight: "600", color: colors.accent, paddingLeft: spacing.sm },
+  error: { borderLeftWidth: 3, borderLeftColor: colors.danger, paddingLeft: spacing.md, paddingVertical: 2 },
+  errorText: { color: colors.danger, fontSize: 14.5, lineHeight: 20 },
+  submit: {
     backgroundColor: colors.night,
     borderRadius: radii.md,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 4,
+    marginTop: spacing.sm,
   },
-  submitButtonDisabled: { opacity: 0.6 },
-  submitLabel: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  submitDisabled: { opacity: 0.6 },
+  submitLabel: { color: colors.cream, fontFamily: fonts.displayMedium, fontSize: 20 },
 });

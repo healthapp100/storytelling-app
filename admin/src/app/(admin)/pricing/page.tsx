@@ -21,8 +21,7 @@ export default async function PricingPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Billing</p>
-        <h1 className="mt-1 font-display text-3xl text-ink">Pricing</h1>
+        <h1 className="font-display text-3xl text-ink">Pricing</h1>
         <p className="mt-2 text-sm text-ink-muted">
           These prices are what your database thinks a plan costs. The store product IDs must
           also exist in App Store Connect / Play Console with matching prices — RevenueCat reads
@@ -63,7 +62,7 @@ export default async function PricingPage() {
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+              className="rounded-md bg-night px-4 py-2.5 text-sm font-medium text-cream transition-all duration-150 hover:bg-night-raised active:scale-[0.98]"
             >
               Save
             </button>
@@ -72,8 +71,7 @@ export default async function PricingPage() {
       </div>
 
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Pay-per-video</p>
-        <h2 className="mt-1 font-display text-2xl text-ink">Purchase tiers</h2>
+        <h2 className="font-display text-2xl text-ink">Purchase tiers</h2>
         <p className="mt-2 text-sm text-ink-muted">
           Real store purchases need a fixed product per price point, not a dynamic price per video —
           a pay-per-video video&apos;s price must match one of these tiers. Set up a matching
@@ -105,7 +103,7 @@ export default async function PricingPage() {
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-ink"
+              className="rounded-md bg-night px-4 py-2.5 text-sm font-medium text-cream transition-all duration-150 hover:bg-night-raised active:scale-[0.98]"
             >
               Save
             </button>

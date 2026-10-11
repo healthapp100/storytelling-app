@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -11,8 +10,9 @@ import {
   View,
 } from "react-native";
 import { CredentialForm } from "../../components/CredentialForm";
+import { FadeIn } from "../../components/FadeIn";
 import { signUp } from "../../lib/auth";
-import { colors, fonts, radii, spacing } from "../../lib/theme";
+import { colors, fonts, spacing } from "../../lib/theme";
 
 const LEGAL_URL = process.env.EXPO_PUBLIC_LEGAL_URL;
 
@@ -27,16 +27,15 @@ export default function SignUp() {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.brandMark}>
-            <Ionicons name="flame" size={22} color={colors.accent} />
-          </View>
-          <Text style={styles.eyebrow}>Get started</Text>
-          <Text style={styles.title}>Create your account</Text>
-          <Text style={styles.subtitle}>
-            Use your email or phone number, whichever is easier — you'll stay signed in until you
-            sign out.
-          </Text>
+          <FadeIn>
+            <Text style={styles.wordmark}>Storytelling</Text>
+            <Text style={styles.title}>Begin here.</Text>
+            <Text style={styles.subtitle}>
+              Use your email or phone number, whichever is easier. You&apos;ll stay signed in until you sign out.
+            </Text>
+          </FadeIn>
 
+          <FadeIn delay={120}>
           <CredentialForm
             submitLabel="Create account"
             showNameField
@@ -61,8 +60,9 @@ export default function SignUp() {
           )}
 
           <Link href="/(auth)/sign-in" style={styles.link}>
-            <Text style={styles.linkText}>Already have an account? Sign in</Text>
+            <Text style={styles.linkText}>Already registered? Sign in</Text>
           </Link>
+          </FadeIn>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -72,34 +72,12 @@ export default function SignUp() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   flex: { flex: 1 },
-  container: { flexGrow: 1, justifyContent: "center", padding: spacing.lg, paddingVertical: spacing.xxl },
-  brandMark: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.lg,
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: 6,
-  },
-  title: { fontFamily: fonts.display, fontSize: 30, color: colors.ink },
-  subtitle: { fontSize: 15, color: colors.inkMuted, marginTop: 6, marginBottom: spacing.xl, lineHeight: 21 },
-  link: { marginTop: spacing.xl, alignSelf: "center" },
-  linkText: { color: colors.inkMuted, fontSize: 14, fontWeight: "600" },
-  legalText: {
-    marginTop: spacing.lg,
-    fontSize: 12.5,
-    color: colors.inkMuted,
-    lineHeight: 18,
-    textAlign: "center",
-  },
-  legalLink: { color: colors.accentInk, fontWeight: "700", textDecorationLine: "underline" },
+  container: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.xxl, paddingBottom: spacing.xxl, gap: spacing.xl },
+  wordmark: { fontFamily: fonts.displayMedium, fontSize: 18, color: colors.accent, marginBottom: spacing.xl },
+  title: { fontFamily: fonts.display, fontSize: 44, lineHeight: 50, color: colors.ink },
+  subtitle: { fontSize: 16, color: colors.inkMuted, marginTop: spacing.sm, lineHeight: 24 },
+  link: { marginTop: spacing.lg, alignSelf: "flex-start" },
+  linkText: { color: colors.ink, fontSize: 15.5, fontWeight: "600", textDecorationLine: "underline" },
+  legalText: { marginTop: spacing.lg, fontSize: 13, color: colors.inkMuted, lineHeight: 19 },
+  legalLink: { color: colors.ink, fontWeight: "700", textDecorationLine: "underline" },
 });

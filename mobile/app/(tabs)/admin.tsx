@@ -14,6 +14,7 @@ import {
 import { Pressy } from "../../components/Pressy";
 import { AppTextInput } from "../../components/AppTextInput";
 import { ErrorState } from "../../components/ErrorState";
+import { PageHeading } from "../../components/PageHeading";
 import { AdminSectionRow } from "../../components/admin/AdminSectionRow";
 import { createSection, updatePlan, updateVideoPurchaseTier, upsertAppContent } from "../../lib/adminActions";
 import {
@@ -200,8 +201,7 @@ export default function AdminDashboard() {
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
-        <Text style={styles.eyebrow}>Manage</Text>
-        <Text style={styles.heading}>Admin</Text>
+        <PageHeading title="Manage" subtitle="Collections, stories, pricing and the home page." />
 
         <View style={styles.block}>
           <Text style={styles.blockTitle}>Sections</Text>
@@ -334,17 +334,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
   container: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  heading: { fontFamily: fonts.display, fontSize: 30, color: colors.ink },
   block: { gap: spacing.sm },
-  blockTitle: { fontSize: 13, fontWeight: "700", color: colors.accent, textTransform: "uppercase", letterSpacing: 1 },
+  blockTitle: { fontFamily: fonts.displayMedium, fontSize: 22, color: colors.ink },
   blockHint: { fontSize: 12.5, color: colors.inkMuted, lineHeight: 18 },
   list: { gap: spacing.sm },
   addCard: {

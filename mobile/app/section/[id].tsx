@@ -1,19 +1,19 @@
-import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { AppTextInput } from "../../components/AppTextInput";
 import { ErrorState } from "../../components/ErrorState";
-import { Pressy } from "../../components/Pressy";
+import { FadeIn } from "../../components/FadeIn";
+import { PageHeading } from "../../components/PageHeading";
 import { getVideosForSection } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
-import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
+import { colors, fonts, radii, spacing } from "../../lib/theme";
 import type { VideoCatalogEntry } from "../../types/database";
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "";
-  const minutes = Math.round(seconds / 60);
+  const minutes = Math.max(1, Math.round(seconds / 60));
   return `${minutes} min`;
 }
 
@@ -72,53 +72,66 @@ export default function SectionDetail() {
         data={filteredVideos ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.eyebrow}>Section</Text>
-            <Text style={styles.heading}>{title ?? "Videos"}</Text>
-            {videos && videos.length > 0 && (
+          <View>
+            <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={12} style={styles.back}>
+              <Text style={styles.backLabel}>←  Library</Text>
+            </Pressable>
+            <PageHeading
+              title={title ?? "Stories"}
+              subtitle={videos.length > 0 ? `${videos.length} ${videos.length === 1 ? "story" : "stories"}` : undefined}
+            />
+            {videos.length > 3 && (
               <AppTextInput
-                style={styles.searchInput}
-                placeholder="Search this section"
+                style={styles.search}
+                placeholder="Find a story"
                 value={query}
                 onChangeText={setQuery}
+                returnKeyType="search"
               />
             )}
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <Ionicons name="film-outline" size={22} color={colors.inkFaint} />
-            <Text style={styles.empty}>
-              {query.trim() ? "No videos match your search." : "No videos here yet — check back soon."}
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>{query.trim() ? "No match." : "Nothing here yet."}</Text>
+            <Text style={styles.emptyText}>
+              {query.trim() ? "Try a different word." : "Stories added to this collection will show up here."}
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <Pressy
-            style={styles.row}
-            onPress={() => router.push({ pathname: "/video/[id]", params: { id: item.id } })}
-          >
-            {item.thumbnail_url ? (
-              <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailWrap} />
-            ) : (
-              <View style={styles.playIconWrap}>
-                <Ionicons name="play" size={16} color={colors.accentInk} />
-              </View>
-            )}
-            <View style={styles.rowText}>
-              <Text style={styles.rowTitle} numberOfLines={2}>
-                {item.title}
-              </Text>
-              <Text style={styles.rowMeta}>
-                {formatDuration(item.duration_seconds)}
-                {item.access_tier === "one_time" ? ` · ₹${item.price_rupees ?? 0} to unlock` : ""}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.accent} />
-          </Pressy>
-        )}
+        renderItem={({ item, index }) => {
+          const paid = item.access_tier === "one_time";
+          return (
+            <FadeIn delay={Math.min(index, 8) * 60}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: "/video/[id]", params: { id: item.id } })}
+                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+              >
+                {item.thumbnail_url ? (
+                  <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
+                ) : (
+                  <View style={[styles.thumb, styles.thumbBlank]}>
+                    <Text style={styles.thumbNumeral}>{index + 1}</Text>
+                  </View>
+                )}
+                <View style={styles.rowText}>
+                  <Text style={styles.rowTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.rowMeta}>
+                    {formatDuration(item.duration_seconds)}
+                    {paid && item.duration_seconds ? "  ·  " : ""}
+                    {paid ? <Text style={styles.price}>₹{item.price_rupees ?? 0}</Text> : null}
+                  </Text>
+                </View>
+              </Pressable>
+            </FadeIn>
+          );
+        }}
       />
     </SafeAreaView>
   );
@@ -127,58 +140,35 @@ export default function SectionDetail() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
-  list: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
-  header: { marginBottom: spacing.md },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  heading: { fontFamily: fonts.display, fontSize: 28, color: colors.ink },
-  searchInput: {
-    marginTop: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: 14,
+  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  back: { alignSelf: "flex-start", marginBottom: spacing.md },
+  backLabel: { fontSize: 15, fontWeight: "600", color: colors.inkMuted },
+  search: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: colors.rule,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
-    backgroundColor: colors.paperRaised,
+    marginBottom: spacing.sm,
   },
-  emptyCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: "dashed",
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    alignItems: "center",
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  empty: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    backgroundColor: colors.paperRaised,
-    borderRadius: radii.md,
-    padding: spacing.md + 2,
-    ...shadow.card,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  playIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  thumbnailWrap: { width: 56, height: 56, borderRadius: radii.md, backgroundColor: colors.accentSoft },
-  rowText: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
-  rowMeta: { fontSize: 13, color: colors.inkMuted },
+  rowPressed: { backgroundColor: colors.accentSoft },
+  thumb: { width: 112, height: 70, borderRadius: radii.sm, backgroundColor: colors.border },
+  thumbBlank: { backgroundColor: colors.night, alignItems: "center", justifyContent: "center" },
+  thumbNumeral: { fontFamily: fonts.display, fontSize: 28, color: colors.accentSoft },
+  rowText: { flex: 1, gap: 4 },
+  rowTitle: { fontFamily: fonts.displayMedium, fontSize: 19, lineHeight: 24, color: colors.ink },
+  rowMeta: { fontSize: 13.5, color: colors.inkMuted },
+  price: { color: colors.accent, fontWeight: "700" },
+  empty: { paddingVertical: spacing.lg, gap: 4 },
+  emptyTitle: { fontFamily: fonts.displayMedium, fontSize: 20, color: colors.ink },
+  emptyText: { fontSize: 14.5, lineHeight: 21, color: colors.inkMuted },
 });

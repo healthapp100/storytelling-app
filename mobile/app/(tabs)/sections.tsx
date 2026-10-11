@@ -1,14 +1,13 @@
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../../components/ErrorState";
-import { Pressy } from "../../components/Pressy";
+import { FadeIn } from "../../components/FadeIn";
+import { PageHeading } from "../../components/PageHeading";
 import { getSections } from "../../lib/queries";
 import { useRealtimeTable } from "../../lib/realtime";
-import { iconForSection } from "../../lib/sectionIcon";
-import { colors, fonts, radii, shadow, spacing } from "../../lib/theme";
+import { colors, fonts, radii, spacing } from "../../lib/theme";
 import type { Section } from "../../types/database";
 
 export default function Sections() {
@@ -59,35 +58,36 @@ export default function Sections() {
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.eyebrow}>Explore</Text>
-            <Text style={styles.heading}>Sections</Text>
-          </View>
+          <PageHeading
+            title="Library"
+            subtitle={sections.length > 0 ? `${sections.length} collections of stories` : undefined}
+          />
         }
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <Ionicons name="leaf-outline" size={22} color={colors.inkFaint} />
-            <Text style={styles.emptyText}>No sections yet — the admin hasn't added any.</Text>
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>Nothing here yet.</Text>
+            <Text style={styles.emptyText}>Collections will be listed here once they&apos;re added.</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <Pressy
-            style={styles.card}
-            onPress={() => router.push({ pathname: "/section/[id]", params: { id: item.id, title: item.title } })}
-          >
-            <View style={styles.cardIconWrap}>
-              {item.icon_url ? (
-                <Image source={{ uri: item.icon_url }} style={styles.cardIconImage} />
-              ) : (
-                <Ionicons name={iconForSection(item.slug)} size={20} color={colors.accentInk} />
-              )}
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              {item.description ? <Text style={styles.cardDescription}>{item.description}</Text> : null}
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.accent} />
-          </Pressy>
+        renderItem={({ item, index }) => (
+          <FadeIn delay={Math.min(index, 8) * 60}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: "/section/[id]", params: { id: item.id, title: item.title } })}
+              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+            >
+              <Text style={styles.numeral}>{String(index + 1).padStart(2, "0")}</Text>
+              <View style={styles.body}>
+                <Text style={styles.title}>{item.title}</Text>
+                {item.description ? (
+                  <Text style={styles.description} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                ) : null}
+              </View>
+              {item.icon_url ? <Image source={{ uri: item.icon_url }} style={styles.iconImage} /> : null}
+            </Pressable>
+          </FadeIn>
         )}
       />
     </SafeAreaView>
@@ -97,47 +97,23 @@ export default function Sections() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
-  list: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
-  header: { marginBottom: spacing.sm },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  heading: { fontFamily: fonts.display, fontSize: 30, color: colors.ink },
-  card: {
+  list: { padding: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  row: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing.md,
-    backgroundColor: colors.paperRaised,
-    borderRadius: radii.md,
-    padding: spacing.lg,
-    ...shadow.card,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  cardIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.md,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  cardIconImage: { width: 44, height: 44 },
-  cardBody: { flex: 1, gap: 2 },
-  cardTitle: { fontSize: 18, fontWeight: "700", color: colors.ink },
-  cardDescription: { fontSize: 14, color: colors.inkMuted },
-  emptyCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: "dashed",
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  emptyText: { color: colors.inkFaint, fontSize: 14, textAlign: "center" },
+  rowPressed: { backgroundColor: colors.accentSoft },
+  numeral: { width: 44, fontFamily: fonts.display, fontSize: 28, lineHeight: 32, color: colors.accent },
+  body: { flex: 1, gap: 4 },
+  title: { fontFamily: fonts.display, fontSize: 24, lineHeight: 29, color: colors.ink },
+  description: { fontSize: 14.5, lineHeight: 21, color: colors.inkMuted },
+  iconImage: { width: 52, height: 52, borderRadius: radii.sm, backgroundColor: colors.border },
+  empty: { paddingVertical: spacing.lg, gap: 4 },
+  emptyTitle: { fontFamily: fonts.displayMedium, fontSize: 20, color: colors.ink },
+  emptyText: { fontSize: 14.5, lineHeight: 21, color: colors.inkMuted },
 });

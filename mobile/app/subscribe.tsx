@@ -1,31 +1,28 @@
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ErrorState } from "../components/ErrorState";
-import { Pressy } from "../components/Pressy";
+import { FadeIn } from "../components/FadeIn";
+import { PageHeading } from "../components/PageHeading";
 import { getSubscriptionPlans } from "../lib/queries";
 import { purchasePackageByIdentifier, restorePurchases } from "../lib/purchases";
 import { useRealtimeTable } from "../lib/realtime";
 import { useToast } from "../lib/toast";
-import { colors, fonts, radii, shadow, spacing } from "../lib/theme";
+import { colors, fonts, spacing } from "../lib/theme";
 import type { SubscriptionPlan } from "../types/database";
 
 const PLAN_LABELS: Record<SubscriptionPlan["code"], string> = {
-  daily: "Daily",
-  weekly: "Weekly",
-  monthly: "Monthly",
+  daily: "One day",
+  weekly: "One week",
+  monthly: "One month",
 };
 
 const PLAN_HINTS: Record<SubscriptionPlan["code"], string> = {
-  daily: "Try it out for a day",
-  weekly: "For a week of stories",
-  monthly: "Best value, full month",
+  daily: "A single day of stories, to try it out",
+  weekly: "Seven days, every collection",
+  monthly: "The best value — a full month",
 };
-
-function formatPrice(rupees: number): string {
-  return `₹${rupees}`;
-}
 
 export default function Subscribe() {
   const [plans, setPlans] = useState<SubscriptionPlan[] | null>(null);
@@ -51,7 +48,7 @@ export default function Subscribe() {
     setPurchasingCode(plan.code);
     try {
       await purchasePackageByIdentifier(plan.revenuecat_product_id);
-      showToast("You're subscribed! Enjoy today's stories.", "celebrate");
+      showToast("You're subscribed. Enjoy the stories.", "celebrate");
       router.back();
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Purchase failed — try again.", "error");
@@ -79,44 +76,43 @@ export default function Subscribe() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.heading}>Choose a plan</Text>
-        <Text style={styles.subheading}>
-          Subscribe to unlock every video in every section, for as long as your plan is active.
-        </Text>
+        <PageHeading title="Plans" subtitle="Every story in every collection, for as long as your plan runs." />
 
-        {plans.map((plan) => {
-          const comingSoon = !plan.revenuecat_product_id;
-          return (
-            <Pressy
-              key={plan.id}
-              style={[styles.planCard, comingSoon && styles.planCardDisabled]}
-              disabled={purchasingCode !== null || comingSoon}
-              onPress={() => handlePurchase(plan)}
-            >
-              <View style={styles.planText}>
-                <View style={styles.planLabelRow}>
-                  <Text style={styles.planLabel}>{PLAN_LABELS[plan.code]}</Text>
-                  {comingSoon && (
-                    <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonLabel}>Coming soon</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.planHint}>{PLAN_HINTS[plan.code]}</Text>
-              </View>
-              {purchasingCode === plan.code ? (
-                <ActivityIndicator color={colors.accent} />
-              ) : (
-                <Text style={[styles.planPrice, comingSoon && styles.planPriceDisabled]}>
-                  {formatPrice(plan.price_rupees)}
-                </Text>
-              )}
-            </Pressy>
-          );
-        })}
+        <View style={styles.list}>
+          {plans.map((plan, index) => {
+            const comingSoon = !plan.revenuecat_product_id;
+            const busy = purchasingCode === plan.code;
+            return (
+              <FadeIn key={plan.id} delay={index * 80}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={purchasingCode !== null || comingSoon}
+                  onPress={() => handlePurchase(plan)}
+                  style={({ pressed }) => [styles.row, pressed && styles.rowPressed, comingSoon && styles.rowMuted]}
+                >
+                  <View style={styles.priceCol}>
+                    {busy ? (
+                      <ActivityIndicator color={colors.accent} />
+                    ) : (
+                      <Text style={styles.price}>
+                        <Text style={styles.rupee}>₹</Text>
+                        {plan.price_rupees}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.planText}>
+                    <Text style={styles.planLabel}>{PLAN_LABELS[plan.code]}</Text>
+                    <Text style={styles.planHint}>{comingSoon ? "Coming soon" : PLAN_HINTS[plan.code]}</Text>
+                  </View>
+                </Pressable>
+              </FadeIn>
+            );
+          })}
+        </View>
 
-        <Pressy
-          style={styles.restoreButton}
+        <Pressable
+          accessibilityRole="button"
+          style={styles.restore}
           onPress={async () => {
             try {
               await restorePurchases();
@@ -126,8 +122,8 @@ export default function Subscribe() {
             }
           }}
         >
-          <Text style={styles.restoreLabel}>Restore purchases</Text>
-        </Pressy>
+          <Text style={styles.restoreLabel}>Already subscribed? Restore purchases</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -136,32 +132,25 @@ export default function Subscribe() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.paper },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
-  container: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
-  heading: { fontFamily: fonts.display, fontSize: 28, color: colors.ink },
-  subheading: { fontSize: 14.5, color: colors.inkMuted, marginBottom: spacing.sm, lineHeight: 21 },
-  planCard: {
+  container: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  list: { borderTopWidth: 1, borderTopColor: colors.border },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.paperRaised,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    ...shadow.card,
+    gap: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  planCardDisabled: { opacity: 0.6 },
-  planText: { gap: 2 },
-  planLabelRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
-  planLabel: { fontSize: 17, fontWeight: "700", color: colors.ink },
-  planHint: { fontSize: 13, color: colors.inkMuted },
-  planPrice: { fontFamily: fonts.display, fontSize: 22, color: colors.accent },
-  planPriceDisabled: { color: colors.inkFaint },
-  comingSoonBadge: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: radii.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  comingSoonLabel: { fontSize: 11, fontWeight: "700", color: colors.accentInk },
-  restoreButton: { alignItems: "center", marginTop: spacing.sm, padding: spacing.sm },
-  restoreLabel: { color: colors.inkMuted, fontSize: 14, fontWeight: "600" },
+  rowPressed: { backgroundColor: colors.accentSoft },
+  rowMuted: { opacity: 0.55 },
+  priceCol: { width: 92, minHeight: 44, justifyContent: "center" },
+  price: { fontFamily: fonts.display, fontSize: 40, lineHeight: 46, color: colors.ink },
+  rupee: { fontSize: 22, color: colors.accent },
+  planText: { flex: 1, gap: 2 },
+  planLabel: { fontFamily: fonts.displayMedium, fontSize: 21, color: colors.ink },
+  planHint: { fontSize: 14, lineHeight: 20, color: colors.inkMuted },
+  restore: { alignSelf: "flex-start", marginTop: spacing.xl, paddingVertical: spacing.sm },
+  restoreLabel: { fontSize: 14.5, fontWeight: "600", color: colors.inkMuted, textDecorationLine: "underline" },
 });

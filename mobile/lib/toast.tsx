@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,16 +14,10 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
 
-const ICONS: Record<ToastKind, keyof typeof Ionicons.glyphMap> = {
-  success: "checkmark-circle",
-  error: "close-circle",
-  celebrate: "sparkles",
-};
-
 const COLORS: Record<ToastKind, string> = {
-  success: colors.success,
-  error: colors.danger,
-  celebrate: colors.accent,
+  success: "#7FC49A",
+  error: "#E8786A",
+  celebrate: "#E8B03A",
 };
 
 // One shared toast + celebration layer mounted once at the app root — any
@@ -63,9 +56,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           pointerEvents="none"
           style={[styles.toast, { top: insets.top + spacing.sm, opacity }]}
         >
-          <View style={[styles.iconWrap, { backgroundColor: COLORS[toast.kind] }]}>
-            <Ionicons name={ICONS[toast.kind]} size={16} color="#fff" />
-          </View>
+          <View style={[styles.edge, { backgroundColor: COLORS[toast.kind] }]} />
           <Text style={styles.message} numberOfLines={2}>
             {toast.message}
           </Text>
@@ -90,15 +81,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.night,
     borderRadius: radii.md,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    paddingVertical: 14,
+    paddingRight: 16,
+    paddingLeft: 0,
+    overflow: "hidden",
     elevation: 6,
     zIndex: 1000,
   },
-  iconWrap: { width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  message: { color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 },
+  edge: { alignSelf: "stretch", width: 5, marginVertical: -14 },
+  message: { color: colors.cream, fontSize: 15, lineHeight: 21, flex: 1, marginLeft: 2 },
 });

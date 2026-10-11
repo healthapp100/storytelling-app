@@ -17,8 +17,7 @@ export default async function SectionsPage() {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Content</p>
-        <h1 className="mt-1 font-display text-3xl text-ink">Sections</h1>
+        <h1 className="font-display text-3xl text-ink">Sections</h1>
         <p className="mt-2 text-sm text-ink-muted">
           Top-level topics — Sutras, Slokas, Puranas, and whatever else you add. Open a section to
           manage its videos.

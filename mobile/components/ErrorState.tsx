@@ -1,22 +1,17 @@
-import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import { Pressy } from "./Pressy";
 import { colors, fonts, radii, spacing } from "../lib/theme";
 
-// Shown whenever a screen's data fetch actually fails (network blip, a
-// backend hiccup, anything) instead of leaving the screen on an infinite
-// spinner with no way out and no explanation — the failure mode every
-// screen had before this existed. "Coming soon" framing on purpose: it
-// reads as "this isn't ready yet," not "you did something wrong."
+// Shown whenever a screen's data fetch actually fails, instead of leaving it
+// on an endless spinner with no way out. Worded as "not ready yet" rather
+// than "you did something wrong".
 export function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <View style={styles.container}>
-      <View style={styles.iconWrap}>
-        <Ionicons name="construct-outline" size={26} color={colors.accent} />
-      </View>
-      <Text style={styles.title}>Working on it</Text>
+      <Text style={styles.title}>This page isn&apos;t loading right now.</Text>
+      <View style={styles.rule} />
       <Text style={styles.message}>
-        This isn&apos;t loading right now — it might just be a slow connection. Give it another try.
+        It&apos;s most likely a slow or dropped connection. Nothing you did caused it — give it another go.
       </Text>
       <Pressy style={styles.button} onPress={onRetry}>
         <Text style={styles.buttonLabel}>Try again</Text>
@@ -26,24 +21,10 @@ export function ErrorState({ onRetry }: { onRetry: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.xl, gap: spacing.sm },
-  iconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accentSoft,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.xs,
-  },
-  title: { fontFamily: fonts.display, fontSize: 20, color: colors.ink },
-  message: { textAlign: "center", color: colors.inkMuted, fontSize: 14.5, lineHeight: 21 },
-  button: {
-    backgroundColor: colors.night,
-    borderRadius: radii.md,
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    marginTop: spacing.sm,
-  },
-  buttonLabel: { color: "#fff", fontWeight: "700" },
+  container: { flex: 1, justifyContent: "center", padding: spacing.lg },
+  title: { fontFamily: fonts.display, fontSize: 30, lineHeight: 36, color: colors.ink },
+  rule: { width: 40, height: 3, backgroundColor: colors.accent, marginVertical: spacing.lg },
+  message: { color: colors.inkMuted, fontSize: 16, lineHeight: 24, marginBottom: spacing.xl },
+  button: { backgroundColor: colors.night, borderRadius: radii.md, paddingVertical: 15, alignItems: "center" },
+  buttonLabel: { color: colors.cream, fontFamily: fonts.displayMedium, fontSize: 19 },
 });

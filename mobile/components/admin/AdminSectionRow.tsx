@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
@@ -130,7 +129,7 @@ export function AdminSectionRow({ section, onChanged }: { section: Section; onCh
           {section.icon_url ? (
             <Image source={{ uri: section.icon_url }} style={styles.manageIconImage} />
           ) : (
-            <Ionicons name="videocam-outline" size={16} color={colors.accentInk} />
+            <Text style={styles.manageArrow}>→</Text>
           )}
         </View>
       </Pressy>
@@ -168,6 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
+  manageArrow: { fontSize: 18, color: colors.accentInk },
   manageIconImage: { width: 32, height: 32 },
   iconPicker: {
     borderWidth: 1,

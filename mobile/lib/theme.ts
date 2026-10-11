@@ -1,29 +1,27 @@
-// Shared design tokens. Pull colors/spacing/type from here rather than
-// hardcoding — keeps every screen visually consistent.
-//
-// Palette: warm parchment ground + deep indigo "night" surfaces + marigold
-// gold accent — evokes lamp-lit night storytelling and temple gold, deliberately
-// steering away from the cream+terracotta combination that reads as a
-// generic AI-generated palette. `ink` is a TEXT color only; `night` is the
-// dedicated dark-surface background (hero cards, primary buttons) — kept
-// separate so text and background roles never collide when either changes.
+// Design tokens. The look is modelled on a palm-leaf manuscript (pothi):
+// khadi-toned paper, soot-black ink, a vermilion mark used sparingly, and a
+// deep peacock green for the few dark surfaces. Deliberately flat — surfaces
+// are separated by hairline rules rather than drop shadows, corners are
+// nearly square like cut paper, and nothing is pure white.
 
 export const colors = {
-  paper: "#F7F2E7", // warm parchment ground, not stark white
-  paperRaised: "#FFFFFF",
-  ink: "#231E33", // near-black with an indigo bias — text color only
-  inkMuted: "#655D78",
-  inkFaint: "#9C93AE",
-  border: "#E7DED0",
-  night: "#211B36", // deep indigo — hero cards, primary buttons, nav accents
-  nightRaised: "#2C2447",
-  accent: "#C98A1F", // marigold/temple gold — the one warm accent
-  accentSoft: "#F5E4C2",
-  accentInk: "#7A5511",
-  success: "#3F6B4A",
-  successSoft: "#E5EFE6",
-  danger: "#B23A2E",
-  dangerSoft: "#F8E6E1",
+  paper: "#F0E9D6", // khadi / palm-leaf ground
+  paperRaised: "#F8F3E4", // a lighter leaf for inputs and raised plates — never pure white
+  ink: "#1A1510", // soot black, warm — text color only
+  inkMuted: "#5E5546",
+  inkFaint: "#948A78",
+  border: "#D9CEB4", // hairline between items
+  rule: "#BFB293", // the heavier ruled line under headings
+  night: "#16302D", // peacock green-black — dark plates, primary buttons
+  nightRaised: "#1F423E",
+  cream: "#F6EFDB", // text on dark plates
+  accent: "#B93A1E", // vermilion — numerals, active marks, key actions
+  accentSoft: "#F1DFA0", // turmeric wash — the highlighter-pen tint
+  accentInk: "#5E3F00",
+  success: "#2F6A43",
+  successSoft: "#DDE8D2",
+  danger: "#8B1E2B",
+  dangerSoft: "#F1D6D2",
 } as const;
 
 export const spacing = {
@@ -35,24 +33,24 @@ export const spacing = {
   xxl: 40,
 } as const;
 
+// Near-square on purpose: cut paper, not soft bubbles.
 export const radii = {
-  sm: 8,
-  md: 12,
-  lg: 18,
+  sm: 2,
+  md: 3,
+  lg: 4,
   pill: 999,
 } as const;
 
 export const fonts = {
-  display: "Fraunces_600SemiBold",
-  displayItalic: "Fraunces_500Medium_Italic",
+  display: "Eczar_700Bold",
+  displayMedium: "Eczar_600SemiBold",
 } as const;
 
+// Kept under the old name so existing screens pick it up, but it's no longer
+// a shadow: a hairline edge (each component sets its own fill).
 export const shadow = {
   card: {
-    shadowColor: "#211B36",
-    shadowOpacity: 0.1,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 } as const;

@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, StyleSheet } from "react-native";
 import { colors } from "../lib/theme";
 
 const { width } = Dimensions.get("window");
-const PIECE_COLORS = [colors.accent, colors.night, colors.success, "#E8B44A", "#7A9E7E"];
+const PIECE_COLORS = [colors.accent, colors.night, "#D9A21B", colors.accentSoft, "#3E6B5E"];
 const PIECE_COUNT = 22;
 
 // A lightweight, pure-Animated confetti burst — no extra native dependency,

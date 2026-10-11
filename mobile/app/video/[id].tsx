@@ -107,43 +107,37 @@ export default function VideoPlayer() {
     if (deniedInfo === "unknown") {
       return (
         <View style={styles.center}>
-          <Stack.Screen options={{ title: "Loading…" }} />
+          <Stack.Screen options={{ title: "" }} />
           <ActivityIndicator color={colors.accent} />
         </View>
       );
     }
 
-    if (deniedInfo?.access_tier === "one_time") {
-      return (
-        <View style={styles.center}>
-          <Stack.Screen options={{ title: "Not available" }} />
-          <Text style={styles.deniedTitle}>{deniedInfo.title}</Text>
-          <Text style={styles.deniedText}>
-            This story costs ₹{deniedInfo.price_rupees ?? 0} to unlock — a one-time purchase, yours
-            to keep watching for as long as it stays live.
-          </Text>
-          <Pressy style={styles.subscribeButton} onPress={handleBuy} disabled={purchasing}>
-            {purchasing ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.subscribeLabel}>Buy for ₹{deniedInfo.price_rupees ?? 0}</Text>
-            )}
-          </Pressy>
-        </View>
-      );
-    }
-
+    const paid = deniedInfo?.access_tier === "one_time";
     return (
-      <View style={styles.center}>
-        <Stack.Screen options={{ title: "Not available" }} />
-        <Text style={styles.deniedTitle}>{deniedInfo ? deniedInfo.title : "Not available right now"}</Text>
-        <Text style={styles.deniedText}>
+      <View style={styles.locked}>
+        <Stack.Screen options={{ title: "" }} />
+        <Text style={styles.lockedTitle}>{deniedInfo ? deniedInfo.title : "This story isn't available right now."}</Text>
+        <View style={styles.lockedRule} />
+        <Text style={styles.lockedText}>
           {deniedInfo
-            ? "Subscribe to unlock this and every story."
-            : "This video may have expired, or it needs a subscription to watch."}
+            ? paid
+              ? `This story is ₹${deniedInfo.price_rupees ?? 0} — a one-time purchase that stays yours for as long as it remains in the library.`
+              : "It's part of the subscription. Subscribe once and every story opens."
+            : "It may have been taken down, or it needs a subscription to watch."}
         </Text>
-        <Pressy style={styles.subscribeButton} onPress={() => router.push("/subscribe")}>
-          <Text style={styles.subscribeLabel}>See subscription plans</Text>
+        <Pressy
+          style={styles.lockedButton}
+          disabled={purchasing}
+          onPress={paid ? handleBuy : () => router.push("/subscribe")}
+        >
+          {purchasing ? (
+            <ActivityIndicator color={colors.cream} />
+          ) : (
+            <Text style={styles.lockedButtonLabel}>
+              {paid ? `Buy for ₹${deniedInfo?.price_rupees ?? 0}` : "See the plans"}
+            </Text>
+          )}
         </Pressy>
       </View>
     );
@@ -163,25 +157,20 @@ export default function VideoPlayer() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xl,
-    gap: spacing.sm,
-    backgroundColor: colors.paper,
-  },
-  deniedTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.ink, textAlign: "center" },
-  deniedText: { textAlign: "center", color: colors.inkMuted, fontSize: 15, lineHeight: 21, marginBottom: spacing.sm },
-  subscribeButton: {
+  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
+  locked: { flex: 1, padding: spacing.lg, paddingTop: spacing.xl, backgroundColor: colors.paper },
+  lockedTitle: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, color: colors.ink },
+  lockedRule: { width: 40, height: 3, backgroundColor: colors.accent, marginVertical: spacing.lg },
+  lockedText: { fontSize: 16, lineHeight: 25, color: colors.inkMuted, marginBottom: spacing.xl },
+  lockedButton: {
     backgroundColor: colors.night,
     borderRadius: radii.md,
-    paddingVertical: 13,
-    paddingHorizontal: 22,
+    paddingVertical: 16,
+    alignItems: "center",
   },
-  subscribeLabel: { color: "#fff", fontWeight: "700" },
+  lockedButtonLabel: { color: colors.cream, fontFamily: fonts.displayMedium, fontSize: 19 },
   player: { width: "100%", aspectRatio: 16 / 9, backgroundColor: "#000" },
   details: { padding: spacing.lg, gap: spacing.sm },
-  title: { fontFamily: fonts.display, fontSize: 22, color: colors.ink },
-  description: { fontSize: 15, color: colors.inkMuted, lineHeight: 22 },
+  title: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, color: colors.ink },
+  description: { fontSize: 16, color: colors.inkMuted, lineHeight: 25 },
 });
