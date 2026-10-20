@@ -1,6 +1,6 @@
 # Admin panel
 
-Next.js app for managing sections, videos, pricing, and home-page content. See `../ARCHITECTURE.md` §7 for the design.
+Next.js app for managing sections, videos, pricing, and home-page content. See [ARCHITECTURE.md](ARCHITECTURE.md) §7 for the design.
 
 ## Setup
 
@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Sign in with an account already promoted to `admin` (see `../supabase/README.md` step 6). There's no separate admin sign-up flow — promote an existing user via SQL.
+Sign in with an account already promoted to `admin` (see [supabase.md](supabase.md) step 6). There's no separate admin sign-up flow — promote an existing user via SQL.
 
 ## Notes
 

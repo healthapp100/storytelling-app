@@ -1,6 +1,6 @@
 # Mobile app
 
-Expo Router app — sign-in, sections/videos, today's video, subscriptions, push notifications. See `../ARCHITECTURE.md`.
+Expo Router app — sign-in, sections/videos, today's video, subscriptions, push notifications. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Setup
 
@@ -75,4 +75,4 @@ If `EXPO_PUBLIC_SENTRY_DSN` is left unset, the app runs fine — crash reporting
 - `app/subscribe.tsx` — RevenueCat purchase flow for the daily/weekly/monthly plans.
 - `lib/purchases.ts` — RevenueCat SDK wiring, keyed to the Supabase user id so the `revenuecat-webhook` Edge Function can sync entitlements back.
 - `lib/notifications.ts` — registers the device for "today's video is up" pushes.
-- `app/(tabs)/admin.tsx`, `app/admin-section/[id].tsx` — full admin CRUD (sections, videos, pricing, home content) built directly into the app, visible only when the signed-in account's `profiles.role` is `admin`. This mirrors the web admin panel one-for-one; use whichever is more convenient — both write to the same tables through the same RLS policies. See `../ARCHITECTURE.md` §7 and the note in this README's history about why a separate web panel is still the primary tool for anything beyond quick on-the-go edits.
+- `app/(tabs)/admin.tsx`, `app/admin-section/[id].tsx` — full admin CRUD (sections, videos, pricing, home content) built directly into the app, visible only when the signed-in account's `profiles.role` is `admin`. This mirrors the web admin panel one-for-one; use whichever is more convenient — both write to the same tables through the same RLS policies. See [ARCHITECTURE.md](ARCHITECTURE.md) §7 and the note in this README's history about why a separate web panel is still the primary tool for anything beyond quick on-the-go edits.

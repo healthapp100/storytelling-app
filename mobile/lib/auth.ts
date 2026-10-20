@@ -19,7 +19,7 @@ function friendlyAuthError(error: AuthError): Error {
 
 // Supabase Auth only ships email+password natively. Phone+password reuses
 // the same identity system by mapping the phone number to a synthetic,
-// never-shown email — see ARCHITECTURE.md §3 for why.
+// never-shown email — see docs/ARCHITECTURE.md §3 for why.
 const PHONE_DOMAIN = "phone.internal";
 
 function normalizePhone(phone: string): string {

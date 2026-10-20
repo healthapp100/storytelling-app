@@ -1,5 +1,5 @@
 // Receives RevenueCat webhook events and syncs entitlement state into
-// user_subscriptions. See ARCHITECTURE.md §6.
+// user_subscriptions. See docs/ARCHITECTURE.md §6.
 //
 // Configure this URL + the shared secret below in the RevenueCat dashboard
 // under Project Settings → Integrations → Webhooks.

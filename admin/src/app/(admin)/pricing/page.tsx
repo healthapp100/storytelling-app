@@ -25,7 +25,7 @@ export default async function PricingPage() {
         <p className="mt-2 text-sm text-ink-muted">
           These prices are what your database thinks a plan costs. The store product IDs must
           also exist in App Store Connect / Play Console with matching prices — RevenueCat reads
-          from the store, not from here. See ARCHITECTURE.md §6.
+          from the store, not from here. See docs/ARCHITECTURE.md §6.
         </p>
       </div>
 

@@ -20,7 +20,7 @@ export function configurePurchases(appUserId: string) {
   }
   // appUserId = the Supabase user id, so RevenueCat's webhook (see
   // supabase/functions/revenuecat-webhook) can write straight back to the
-  // matching user_subscriptions row. See ARCHITECTURE.md §6.
+  // matching user_subscriptions row. See docs/ARCHITECTURE.md §6.
   Purchases.configure({ apiKey, appUserID: appUserId });
   configured = true;
 }

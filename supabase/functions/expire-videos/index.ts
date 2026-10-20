@@ -1,4 +1,4 @@
-// Nightly sweep — see ARCHITECTURE.md §5.
+// Nightly sweep — see docs/ARCHITECTURE.md §5.
 // Finds videos past expires_at, deletes the file from Supabase Storage,
 // marks the row deleted.
 import { createClient } from "jsr:@supabase/supabase-js@2";

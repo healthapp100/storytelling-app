@@ -42,4 +42,4 @@
 
 Videos live in the `videos` Supabase Storage bucket (public bucket + admin-only write policies, see `migrations/0007_storage.sql`) — not Cloudflare R2. The app and admin panel upload directly to it using the signed-in user's own session; no presigned-URL Edge Function or separate storage credentials are needed. R2 was the original plan (see `ARCHITECTURE.md`) but needed a payment method on file that wasn't available yet — this is a drop-in swap, not a workaround, and can be swapped back later without touching the data model.
 
-See `../ARCHITECTURE.md` for the reasoning behind everything else.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the reasoning behind everything else.
